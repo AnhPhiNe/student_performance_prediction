@@ -177,9 +177,3 @@ Planned screenshot slots:
 - Add Streamlit secrets/config documentation if needed.
 - Explore SHAP-based explainability as a future enhancement.
 
-## 10. CV Bullet Points
-
-- Built an end-to-end student exam score prediction app using Python, scikit-learn, and Streamlit.
-- Packaged a trained Ridge Regression pipeline into a multi-page app supporting single and batch inference.
-- Implemented input validation, feature engineering, model loading, prediction logic, and coefficient-based interpretation in modular `src/` components.
-- Designed a portfolio-ready ML project structure with notebooks, model artifacts, app pages, tests, and reusable utility modules.
