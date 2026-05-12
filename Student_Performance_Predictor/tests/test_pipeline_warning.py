@@ -1,41 +1,36 @@
+from pathlib import Path
+
 import joblib
 import pandas as pd
 
-PIPELINE_PATH = "models/hcmue_student_full_pipeline_v1_0.joblib"
-RAW_FEATURES_PATH = "models/raw_feature_names.joblib"
+from src.config import PIPELINE_PATH, RAW_FEATURES_PATH, SAMPLE_PROFILES
 
-pipeline = joblib.load(PIPELINE_PATH)
-raw_feature_names = joblib.load(RAW_FEATURES_PATH)
 
-if not isinstance(raw_feature_names, list):
-    raw_feature_names = list(raw_feature_names)
+def test_model_artifacts_exist():
+    assert Path(PIPELINE_PATH).is_file(), f"Missing pipeline artifact: {PIPELINE_PATH}"
+    assert Path(RAW_FEATURES_PATH).is_file(), f"Missing raw feature artifact: {RAW_FEATURES_PATH}"
 
-sample = {
-    "Hours_Studied": 5,
-    "Attendance": 85,
-    "Previous_Scores": 75,
-    "Tutoring_Sessions": 2,
-    "Sleep_Hours": 7,
-    "Physical_Activity": 3,
-    "Parental_Involvement": "Medium",
-    "Access_to_Resources": "Medium",
-    "Extracurricular_Activities": "Yes",
-    "Motivation_Level": "Medium",
-    "Internet_Access": "Yes",
-    "Family_Income": "Medium",
-    "Teacher_Quality": "Medium",
-    "School_Type": "Public",
-    "Peer_Influence": "Neutral",
-    "Learning_Disabilities": "No",
-    "Parental_Education_Level": "College",
-    "Distance_from_Home": "Near",
-    "Gender": "Male"
-}
 
-df = pd.DataFrame([sample], columns=raw_feature_names)
+def test_load_pipeline_and_raw_features_successfully():
+    pipeline = joblib.load(PIPELINE_PATH)
+    raw_feature_names = joblib.load(RAW_FEATURES_PATH)
 
-print("Type of input:", type(df))
-print("Columns:", df.columns.tolist())
+    assert hasattr(pipeline, "predict")
+    assert raw_feature_names is not None
+    assert len(raw_feature_names) > 0
 
-pred = pipeline.predict(df)
-print("Prediction:", pred)
+
+def test_pipeline_prediction_is_numeric_and_in_valid_range():
+    pipeline = joblib.load(PIPELINE_PATH)
+    raw_feature_names = joblib.load(RAW_FEATURES_PATH)
+
+    if not isinstance(raw_feature_names, list):
+        raw_feature_names = list(raw_feature_names)
+
+    sample = SAMPLE_PROFILES["Balanced Student"]
+    input_df = pd.DataFrame([sample], columns=raw_feature_names)
+
+    prediction = pipeline.predict(input_df)[0]
+    prediction = float(prediction)
+
+    assert 0 <= prediction <= 100
