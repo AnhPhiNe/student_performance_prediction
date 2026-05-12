@@ -1,4 +1,5 @@
 from pathlib import Path
+import warnings
 
 import joblib
 import pandas as pd
@@ -22,6 +23,7 @@ def test_load_pipeline_and_raw_features_successfully():
 
 def test_pipeline_prediction_is_numeric_and_in_valid_range():
     pipeline = joblib.load(PIPELINE_PATH)
+    pipeline.set_output(transform="pandas")
     raw_feature_names = joblib.load(RAW_FEATURES_PATH)
 
     if not isinstance(raw_feature_names, list):
@@ -30,7 +32,17 @@ def test_pipeline_prediction_is_numeric_and_in_valid_range():
     sample = SAMPLE_PROFILES["Balanced Student"]
     input_df = pd.DataFrame([sample], columns=raw_feature_names)
 
-    prediction = pipeline.predict(input_df)[0]
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        prediction = pipeline.predict(input_df)[0]
+
+    feature_name_warnings = [
+        warning
+        for warning in caught_warnings
+        if "does not have valid feature names" in str(warning.message)
+    ]
+
+    assert not feature_name_warnings
     prediction = float(prediction)
 
     assert 0 <= prediction <= 100
