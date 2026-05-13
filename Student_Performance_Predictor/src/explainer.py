@@ -3,30 +3,32 @@
 import numpy as np
 import pandas as pd
 
+from src.config import CATEGORICAL_OPTIONS, FRIENDLY_LABELS
+
+
+def humanize_feature_name(name: str) -> str:
+    return FRIENDLY_LABELS.get(name, name.replace("_", " "))
+
 
 def clean_display_name(name: str) -> str:
     """
-    Làm sạch tên feature để hiển thị đẹp hơn.
+    Convert encoded pipeline feature names into user-facing labels.
     """
     clean_name = name.split("__")[-1]
 
-    suffixes = [
-        "_Yes", "_No",
-        "_Male", "_Female",
-        "_Public", "_Private",
-        "_Urban", "_Rural"
-    ]
+    for feature, options in CATEGORICAL_OPTIONS.items():
+        prefix = f"{feature}_"
+        if clean_name.startswith(prefix):
+            category = clean_name[len(prefix):].replace("_", " ")
+            if category in options:
+                return f"{humanize_feature_name(feature)} = {category}"
 
-    for s in suffixes:
-        if clean_name.endswith(s):
-            clean_name = clean_name.replace(s, "")
-
-    return clean_name
+    return humanize_feature_name(clean_name)
 
 
 def build_ridge_coefficient_table(core_model, encoded_feature_names: list[str]) -> pd.DataFrame:
     """
-    Tạo bảng coefficient từ Ridge model.
+    Build a coefficient table from the Ridge model.
     """
     coef_series = pd.Series(core_model.coef_, index=encoded_feature_names)
 
@@ -36,7 +38,6 @@ def build_ridge_coefficient_table(core_model, encoded_feature_names: list[str]) 
         "Coefficient": coef_series.values,
     })
 
-    # Nếu tên hiển thị trùng nhau thì cộng hệ số lại
     coef_df = (
         coef_df.groupby("Display_Name", as_index=False)["Coefficient"]
         .sum()
@@ -48,7 +49,7 @@ def build_ridge_coefficient_table(core_model, encoded_feature_names: list[str]) 
     coef_df["Direction"] = np.where(
         coef_df["Coefficient"] >= 0,
         "Positive",
-        "Negative"
+        "Negative",
     )
 
     return coef_df
@@ -56,16 +57,18 @@ def build_ridge_coefficient_table(core_model, encoded_feature_names: list[str]) 
 
 def get_top_positive_negative(coef_df: pd.DataFrame, top_n: int = 10):
     """
-    Trả về top positive và top negative coefficients.
+    Return top positive and top negative coefficients.
     """
     top_positive = (
-        coef_df.sort_values(by="Coefficient", ascending=False)
+        coef_df[coef_df["Coefficient"] > 0]
+        .sort_values(by="Coefficient", ascending=False)
         .head(top_n)
         .reset_index(drop=True)
     )
 
     top_negative = (
-        coef_df.sort_values(by="Coefficient", ascending=True)
+        coef_df[coef_df["Coefficient"] < 0]
+        .sort_values(by="Coefficient", ascending=True)
         .head(top_n)
         .reset_index(drop=True)
     )
