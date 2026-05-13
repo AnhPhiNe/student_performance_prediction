@@ -190,11 +190,18 @@ GET  /health
 GET  /metadata
 POST /predict
 POST /batch-predict
+POST /batch-predict-csv
 ```
 
 `POST /predict` accepts one student profile and returns a predicted score, score band, recommendations, and validation warnings.
 
 `POST /batch-predict` accepts a JSON payload with multiple records and returns row-level predictions plus a batch average.
+
+`POST /batch-predict-csv` accepts a UTF-8 CSV upload and returns the same batch prediction response format.
+
+For CSV batch prediction, selected categorical fields with missing values are filled with neutral defaults, while missing numeric values are left for the model pipeline's median imputer.
+
+CSV uploads must use the `.csv` extension, contain at least one data row, and include at least one expected input column before schema validation runs.
 
 ## Current Model Snapshot
 
