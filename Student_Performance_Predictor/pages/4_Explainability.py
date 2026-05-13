@@ -2,10 +2,19 @@
 
 import matplotlib.pyplot as plt
 import streamlit as st
+st.set_page_config(
+    page_title="Explainability | EduPredict",
+    page_icon=":mortar_board:",
+    layout="wide",
+)
 
-from src.loader import load_model_assets
+from src.loader import load_css, load_model_assets
 from src.explainer import build_ridge_coefficient_table, get_top_positive_negative
 from src.ui_components import render_section_title, render_empty_state
+
+css = load_css()
+if css:
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 # =========================================================
 # 1) LOAD ASSETS
@@ -22,6 +31,11 @@ except Exception as e:
 render_section_title(
     "Model Explainability",
     "Interpret the final Ridge Regression model through coefficient-based insights."
+)
+
+st.warning(
+    "These coefficients describe how the trained Ridge model uses features for prediction. "
+    "They do not prove causal relationships."
 )
 
 # =========================================================
@@ -64,7 +78,7 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.subheader("Top Positive Drivers")
     st.caption("These features push the predicted score upward when their values increase or when that category is active.")
-    st.dataframe(top_positive[["Display_Name", "Coefficient"]], width="stretch", hide_index=True)
+    st.dataframe(top_positive[["Display_Name", "Coefficient"]], use_container_width=True, hide_index=True)
 
     fig, ax = plt.subplots(figsize=(8, 5))
     plot_df = top_positive.sort_values(by="Coefficient", ascending=True)
@@ -77,7 +91,7 @@ with tab1:
 with tab2:
     st.subheader("Top Negative Drivers")
     st.caption("These features are associated with lower predicted scores when they increase or when that category is active.")
-    st.dataframe(top_negative[["Display_Name", "Coefficient"]], width="stretch", hide_index=True)
+    st.dataframe(top_negative[["Display_Name", "Coefficient"]], use_container_width=True, hide_index=True)
 
     fig, ax = plt.subplots(figsize=(8, 5))
     plot_df = top_negative.sort_values(by="Coefficient", ascending=True)
@@ -89,7 +103,7 @@ with tab2:
 
 with tab3:
     st.subheader("Full Coefficient Table")
-    st.dataframe(coef_df, width="stretch", hide_index=True)
+    st.dataframe(coef_df, use_container_width=True, hide_index=True)
 
 st.info(
     "Because the final model is Ridge Regression, explainability is based on learned coefficients rather than SHAP tree explanations. "

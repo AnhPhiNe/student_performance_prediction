@@ -118,7 +118,7 @@ def build_display_recommendations(input_df, recommendations: list[str], score: f
 
     hours_studied = get_input_value(input_df, "Hours_Studied")
     if hours_studied is not None and float(hours_studied) < 6:
-        display_recommendations.append("Increase daily focused study time gradually.")
+        display_recommendations.append("Increase weekly study consistency gradually.")
 
     previous_scores = get_input_value(input_df, "Previous_Scores")
     if previous_scores is not None and float(previous_scores) < 80:
@@ -154,7 +154,16 @@ def render_input_widget(feature: str):
     label = get_friendly_label(feature)
     current_value = st.session_state.form_data.get(feature, DEFAULT_VALUES.get(feature))
 
-    if feature in NUMERIC_RANGES:
+    if feature == "Hours_Studied":
+        st.session_state.form_data[feature] = st.number_input(
+            label,
+            min_value=0,
+            value=int(current_value),
+            step=1,
+            help="Weekly study hours. No upper limit is enforced by validation.",
+        )
+
+    elif feature in NUMERIC_RANGES:
         min_val, max_val = NUMERIC_RANGES[feature]
         value = int(current_value)
 

@@ -1,9 +1,18 @@
 # pages/5_About.py
 
 import streamlit as st
+st.set_page_config(
+    page_title="About | EduPredict",
+    page_icon=":mortar_board:",
+    layout="wide",
+)
 
-from src.loader import load_model_assets
+from src.loader import load_css, load_model_assets
 from src.ui_components import render_section_title, render_kpi_cards
+
+css = load_css()
+if css:
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 # =========================================================
 # 1) LOAD ASSETS

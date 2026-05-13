@@ -105,7 +105,7 @@ def generate_recommendations(input_df: pd.DataFrame) -> list[str]:
 
     if "Hours_Studied" in input_df.columns and float(input_df["Hours_Studied"].iloc[0]) < 4:
         recommendations.append(
-            "Increase daily study time gradually instead of relying on last-minute cramming."
+            "Increase weekly study time gradually instead of relying on last-minute cramming."
         )
 
     if "Sleep_Hours" in input_df.columns and float(input_df["Sleep_Hours"].iloc[0]) < 6:

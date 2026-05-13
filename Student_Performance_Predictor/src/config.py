@@ -29,7 +29,7 @@ CSS_PATH = os.path.join(CSS_DIR, "styles.css")
 # 2) TÊN CỘT HIỂN THỊ THÂN THIỆN CHO NGƯỜI DÙNG
 # =========================================================
 FRIENDLY_LABELS = {
-    "Hours_Studied": "Hours Studied per Day",
+    "Hours_Studied": "Hours Studied per Week",
     "Attendance": "Attendance (%)",
     "Previous_Scores": "Previous Exam Score",
     "Tutoring_Sessions": "Tutoring Sessions per Month",
@@ -172,7 +172,6 @@ SAMPLE_PROFILES = {
 # 6) KHOẢNG GIÁ TRỊ HỢP LỆ CHO BIẾN SỐ
 # =========================================================
 NUMERIC_RANGES = {
-    "Hours_Studied": (0, 12),
     "Attendance": (0, 100),
     "Previous_Scores": (0, 100),
     "Tutoring_Sessions": (0, 20),
