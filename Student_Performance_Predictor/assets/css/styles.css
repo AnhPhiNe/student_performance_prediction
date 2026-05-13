@@ -444,7 +444,7 @@
 }
 
 .ep-main-recommendation {
-    margin: 0.75rem 0 0 0;
+    margin: 0.75rem 0 0.75rem 0;
     padding: 0.72rem 0.85rem;
     border-radius: var(--ep-radius);
     background: var(--ep-primary-soft);

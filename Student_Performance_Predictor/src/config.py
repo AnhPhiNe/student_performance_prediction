@@ -172,6 +172,7 @@ SAMPLE_PROFILES = {
 # 6) KHOẢNG GIÁ TRỊ HỢP LỆ CHO BIẾN SỐ
 # =========================================================
 NUMERIC_RANGES = {
+    "Hours_Studied":(0,80),
     "Attendance": (0, 100),
     "Previous_Scores": (0, 100),
     "Tutoring_Sessions": (0, 20),

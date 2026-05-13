@@ -154,16 +154,7 @@ def render_input_widget(feature: str):
     label = get_friendly_label(feature)
     current_value = st.session_state.form_data.get(feature, DEFAULT_VALUES.get(feature))
 
-    if feature == "Hours_Studied":
-        st.session_state.form_data[feature] = st.number_input(
-            label,
-            min_value=0,
-            value=int(current_value),
-            step=1,
-            help="Weekly study hours. No upper limit is enforced by validation.",
-        )
-
-    elif feature in NUMERIC_RANGES:
+    if feature in NUMERIC_RANGES:
         min_val, max_val = NUMERIC_RANGES[feature]
         value = int(current_value)
 

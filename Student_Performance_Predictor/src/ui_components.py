@@ -4,11 +4,9 @@ import streamlit as st
 
 
 def render_page_header(title: str, subtitle: str, badge_text: str | None = None):
-    badge_html = f"<div class='ep-badge'>{badge_text}</div>" if badge_text else ""
     st.markdown(
         (
             "<div class='ep-page-header'>"
-            f"{badge_html}"
             f"<h1 class='ep-page-title'>{title}</h1>"
             f"<p class='ep-page-subtitle'>{subtitle}</p>"
             "</div>"
@@ -17,13 +15,10 @@ def render_page_header(title: str, subtitle: str, badge_text: str | None = None)
     )
 
 
-def render_hero_section(title: str, subtitle: str, badge_text: str | None = None):
-    badge_html = f"<div class='ep-badge'>{badge_text}</div>" if badge_text else ""
-
+def render_hero_section(title: str, subtitle: str):
     st.markdown(
         f"""
         <section class="ep-hero">
-            {badge_html}
             <h1 class="ep-hero-title">{title}</h1>
             <p class="ep-hero-subtitle">{subtitle}</p>
         </section>
