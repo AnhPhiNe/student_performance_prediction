@@ -9,7 +9,13 @@ st.set_page_config(
 )
 
 from src.loader import load_css, load_model_assets
-from src.ui_components import render_kpi_cards, render_section_title
+from src.ui_components import (
+    render_cta_card,
+    render_feature_cards,
+    render_page_header,
+    render_text_cards,
+    render_workflow_strip,
+)
 
 
 css = load_css()
@@ -35,19 +41,12 @@ except Exception as e:
     assets_error = str(e)
 
 
-def render_page_link(path: str, label: str):
-    try:
-        st.page_link(path, label=label)
-    except Exception:
-        st.write(f"- {label}: use the sidebar navigation.")
-
-
 # =========================================================
 # 2) HEADER
 # =========================================================
-render_section_title(
+render_page_header(
     "About EduPredict",
-    "A compact AI portfolio case study for student performance prediction."
+    "A compact case study showing how a trained ML model becomes a usable prediction product.",
 )
 
 if assets_error:
@@ -59,55 +58,77 @@ if assets_error:
 # =========================================================
 # 3) PROJECT SUMMARY
 # =========================================================
-render_kpi_cards([
-    ("Project Type", "ML App"),
-    ("Task", "Regression"),
-    ("Model", model_name),
-    ("Input Features", str(len(raw_feature_names)) if assets_loaded else "N/A"),
-])
+feature_count = str(len(raw_feature_names)) if assets_loaded and raw_feature_names else "19"
 
 st.markdown("### Project Summary")
-st.write(
-    "EduPredict is an end-to-end machine learning application that estimates student exam scores "
-    "from academic, lifestyle, family, and school-related inputs. The goal is to show practical ML "
-    "engineering: not only training a model, but packaging it into a usable Streamlit product."
-)
+summary_col, snapshot_col = st.columns([1.55, 1], gap="large")
+
+with summary_col:
+    st.markdown(
+        """
+        <div class="ep-about-summary">
+            <div>
+                <span>Problem</span>
+                <p>Estimate student exam performance from academic, lifestyle, family, and school context factors.</p>
+            </div>
+            <div>
+                <span>What I built</span>
+                <p>A Streamlit ML product with single prediction, batch CSV scoring, validation, and model insight views.</p>
+            </div>
+            <div>
+                <span>Outcome</span>
+                <p>A polished app that shows the full path from trained model artifact to usable inference workflow.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with snapshot_col:
+    st.markdown(
+        f"""
+        <div class="ep-about-snapshot">
+            <div class="ep-about-snapshot-title">Project Snapshot</div>
+            <div class="ep-about-snapshot-grid">
+                <div><span>Product</span><strong>ML App</strong></div>
+                <div><span>Model</span><strong>{model_name}</strong></div>
+                <div><span>Workflow</span><strong>Single + Batch</strong></div>
+                <div><span>Inputs</span><strong>{feature_count} features</strong></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # =========================================================
 # 4) WHAT I BUILT
 # =========================================================
 st.markdown("### What I Built")
-col1, col2, col3 = st.columns(3, gap="large")
-
-with col1:
-    st.markdown("**Single Prediction**")
-    st.write("Interactive form for scoring one student profile and returning a clear result.")
-
-with col2:
-    st.markdown("**Batch Prediction**")
-    st.write("CSV upload workflow with schema validation, preview, summary, and result download.")
-
-with col3:
-    st.markdown("**Model Insights**")
-    st.write("Coefficient-based interpretation to explain positive, negative, and overall drivers.")
+render_feature_cards([
+    ("1", "Single Prediction", "Interactive profile scoring with a clear result and concise recommendation."),
+    ("2", "Batch Prediction", "CSV validation, preview, prediction summary, and downloadable results."),
+    ("3", "Model Insights", "Directional drivers and overall influence views from Ridge coefficients."),
+])
+st.markdown("<div class='ep-section-gap'></div>", unsafe_allow_html=True)
 
 
 # =========================================================
 # 5) TECHNICAL ARCHITECTURE
 # =========================================================
 st.markdown("### Technical Architecture")
-st.write(
-    "The app uses a saved sklearn pipeline for inference, so feature engineering, preprocessing, "
-    "and prediction stay consistent between training and deployment."
-)
+st.caption("Saved sklearn pipeline for consistent inference.")
 
-st.code(
-    "User input -> Validation -> Feature engineering -> Preprocessing -> Ridge prediction -> Result",
-    language="text",
-)
+render_workflow_strip([
+    "Input",
+    "Validate",
+    "Pipeline",
+    "Predict",
+    "Result",
+])
 
-with st.expander("View module structure", expanded=False):
+with st.expander("View technical details", expanded=False):
+    st.markdown("#### Module structure")
     st.markdown(
         """
         - `src/config.py`: shared configuration and UI labels
@@ -120,7 +141,7 @@ with st.expander("View module structure", expanded=False):
         """
     )
 
-with st.expander("View model artifacts", expanded=False):
+    st.markdown("#### Model artifacts")
     st.markdown(
         """
         - `hcmue_student_full_pipeline_v1_0.joblib`: full inference pipeline
@@ -130,7 +151,7 @@ with st.expander("View model artifacts", expanded=False):
         """
     )
 
-with st.expander("View hyperparameters", expanded=False):
+    st.markdown("#### Training metadata")
     if best_params:
         st.json(best_params)
     else:
@@ -141,60 +162,48 @@ with st.expander("View hyperparameters", expanded=False):
 # 6) ENGINEERING HIGHLIGHTS
 # =========================================================
 st.markdown("### Engineering Highlights")
-highlight_col1, highlight_col2 = st.columns(2, gap="large")
-
-with highlight_col1:
-    st.markdown(
-        """
-        - End-to-end sklearn pipeline for consistent inference
-        - Multi-page Streamlit interface with single and batch workflows
-        - Input validation before prediction
-        """
-    )
-
-with highlight_col2:
-    st.markdown(
-        """
-        - CSV template and result download flow
-        - Coefficient-based model insight page
-        - Modular project structure suitable for maintenance
-        """
-    )
+render_text_cards([
+    ("ML Pipeline", "Artifact-based inference with consistent preprocessing."),
+    ("Product UX", "Single and batch workflows with validation."),
+    ("Model Insight", "Readable coefficient driver views."),
+])
 
 
 # =========================================================
 # 7) LIMITATIONS & NEXT STEPS
 # =========================================================
 st.markdown("### Limitations & Next Steps")
-st.markdown(
-    """
-    This project is designed for portfolio demonstration, not real educational decision-making.
-    The model is useful for showing an ML product workflow, but predictions should be interpreted
-    carefully and with awareness of dataset limitations.
-    """
-)
+st.warning("Demo only. Not for real educational decisions.")
 
 limit_col1, limit_col2 = st.columns(2, gap="large")
 
 with limit_col1:
-    st.markdown("**Current limitations**")
     st.markdown(
         """
-        - High-score samples are relatively limited.
-        - Coefficient insights are global, not personalized explanations.
-        - Recommendations are partly rule-based.
-        """
+        <div class="ep-list-card">
+            <div class="ep-list-card-title">Current limitations</div>
+            <div class="ep-list-row">Limited high-score samples</div>
+            <div class="ep-list-row">Global, non-causal insights</div>
+            <div class="ep-list-row">Partly rule-based recommendations</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 with limit_col2:
-    st.markdown("**Next steps**")
     st.markdown(
         """
-        - Add model metadata/version tracking.
-        - Improve local explanation for individual predictions.
-        - Add more targeted tests for validation and inference.
-        """
+        <div class="ep-list-card">
+            <div class="ep-list-card-title">Next steps</div>
+            <div class="ep-list-row">Add model versioning</div>
+            <div class="ep-list-row">Improve local explanations</div>
+            <div class="ep-list-row">Expand inference tests</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+
+st.markdown("<div class='ep-tight-spacer'></div>", unsafe_allow_html=True)
 
 with st.expander("View future improvements", expanded=False):
     st.markdown(
@@ -215,10 +224,25 @@ st.markdown("### Explore the App")
 cta_col1, cta_col2, cta_col3 = st.columns(3, gap="large")
 
 with cta_col1:
-    render_page_link("pages/2_Single_Prediction.py", "Try Single Prediction")
+    render_cta_card(
+        "Predict one student",
+        "Use the interactive form to estimate a single student's exam score.",
+        "pages/2_Single_Prediction.py",
+        "Predict One Student",
+    )
 
 with cta_col2:
-    render_page_link("pages/3_Batch_Prediction.py", "Run Batch Prediction")
+    render_cta_card(
+        "Score a CSV",
+        "Validate a batch file, run predictions, and download the results.",
+        "pages/3_Batch_Prediction.py",
+        "Score CSV File",
+    )
 
 with cta_col3:
-    render_page_link("pages/4_Explainability.py", "View Model Insights")
+    render_cta_card(
+        "Inspect model drivers",
+        "See which model drivers push predictions upward or downward.",
+        "pages/4_Explainability.py",
+        "Inspect Drivers",
+    )

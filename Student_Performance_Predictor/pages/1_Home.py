@@ -9,12 +9,13 @@ st.set_page_config(
 
 from src.loader import load_css, load_model_assets, load_dataset
 from src.ui_components import (
-    render_hero_section,
+    render_page_header,
     render_section_title,
     render_kpi_cards,
     render_feature_cards,
     render_workflow_strip,
     render_empty_state,
+    render_cta_card,
 )
 
 
@@ -33,16 +34,6 @@ except Exception as e:
     st.stop()
 
 
-# =========================================================
-# 2) SMALL HELPERS
-# =========================================================
-def page_link_or_sidebar_note(page_path: str, label: str):
-    if hasattr(st, "page_link"):
-        st.page_link(page_path, label=label)
-    else:
-        st.caption(f"Open {label} from the sidebar.")
-
-
 def get_model_label() -> str:
     if best_params and "model_name" in best_params:
         return str(best_params["model_name"])
@@ -52,7 +43,7 @@ def get_model_label() -> str:
 # =========================================================
 # 3) HERO
 # =========================================================
-render_hero_section(
+render_page_header(
     title="EduPredict",
     subtitle=(
         "A Streamlit portfolio app that predicts student exam performance from academic, "
@@ -121,19 +112,28 @@ render_section_title(
 cta_col1, cta_col2, cta_col3 = st.columns(3, gap="large")
 
 with cta_col1:
-    st.markdown("### Start single prediction")
-    st.write("Build one student profile and see the predicted score immediately.")
-    page_link_or_sidebar_note("pages/2_Single_Prediction.py", "Single Prediction")
+    render_cta_card(
+        "Start single prediction",
+        "Build one student profile and see the predicted score immediately.",
+        "pages/2_Single_Prediction.py",
+        "Open Single Prediction",
+    )
 
 with cta_col2:
-    st.markdown("### Try batch prediction")
-    st.write("Download the template, upload a CSV, validate records, and export results.")
-    page_link_or_sidebar_note("pages/3_Batch_Prediction.py", "Batch Prediction")
+    render_cta_card(
+        "Try batch prediction",
+        "Download the template, upload a CSV, validate records, and export results.",
+        "pages/3_Batch_Prediction.py",
+        "Open Batch Prediction",
+    )
 
 with cta_col3:
-    st.markdown("### View model insights")
-    st.write("Understand which features push predictions upward or downward.")
-    page_link_or_sidebar_note("pages/4_Explainability.py", "Explainability")
+    render_cta_card(
+        "View model insights",
+        "Understand which features push predictions upward or downward.",
+        "pages/4_Explainability.py",
+        "Open Model Insights",
+    )
 
 
 # =========================================================

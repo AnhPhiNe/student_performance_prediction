@@ -3,6 +3,20 @@
 import streamlit as st
 
 
+def render_page_header(title: str, subtitle: str, badge_text: str | None = None):
+    badge_html = f"<div class='ep-badge'>{badge_text}</div>" if badge_text else ""
+    st.markdown(
+        (
+            "<div class='ep-page-header'>"
+            f"{badge_html}"
+            f"<h1 class='ep-page-title'>{title}</h1>"
+            f"<p class='ep-page-subtitle'>{subtitle}</p>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def render_hero_section(title: str, subtitle: str, badge_text: str | None = None):
     badge_html = f"<div class='ep-badge'>{badge_text}</div>" if badge_text else ""
 
@@ -53,6 +67,41 @@ def render_feature_cards(cards: list[tuple[str, str, str]]):
                 """,
                 unsafe_allow_html=True,
             )
+
+
+def render_text_cards(cards: list[tuple[str, str]]):
+    cols = st.columns(len(cards), gap="medium")
+    for col, (title, desc) in zip(cols, cards):
+        with col:
+            st.markdown(
+                f"""
+                <div class="ep-text-card">
+                    <div class="ep-text-card-title">{title}</div>
+                    <div class="ep-text-card-desc">{desc}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+def render_cta_card(title: str, desc: str, page_path: str, link_label: str):
+    button_key = f"cta_{page_path}_{link_label}".replace("/", "_").replace(" ", "_")
+
+    st.markdown(
+        f"""
+        <div class="ep-cta-card">
+            <div class="ep-cta-title">{title}</div>
+            <div class="ep-cta-desc">{desc}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button(link_label, key=button_key, use_container_width=True):
+        try:
+            st.switch_page(page_path)
+        except Exception:
+            st.caption(f"Open {link_label} from the sidebar.")
 
 
 def render_workflow_strip(steps: list[str]):
@@ -123,19 +172,43 @@ def render_next_step_cards():
 
 
 def render_root_welcome():
-    st.caption("ML Portfolio Project")
-    st.title("EduPredict")
-    st.subheader("Student Performance Predictor")
-    st.write(
-        "A compact Streamlit app for estimating student exam performance from academic, "
-        "lifestyle, family, and school-related factors."
+    render_page_header(
+        "EduPredict",
+        (
+            "A compact Streamlit app for estimating student exam performance from "
+            "academic, lifestyle, family, and school-related factors."
+        ),
     )
 
     st.info(
-        "Use the sidebar navigation to open Home, Single Prediction, Batch Prediction, "
-        "Explainability, or About. Start with Home for context, or Single Prediction "
-        "to try the model immediately."
+        "Start with Home for context, or jump straight into a prediction workflow."
     )
+
+    col1, col2, col3 = st.columns(3, gap="large")
+
+    with col1:
+        render_cta_card(
+            "Open Home",
+            "Review the project overview, workflows, and model status.",
+            "pages/1_Home.py",
+            "Go to Home",
+        )
+
+    with col2:
+        render_cta_card(
+            "Try one profile",
+            "Estimate one student's score with the interactive form.",
+            "pages/2_Single_Prediction.py",
+            "Open Single Prediction",
+        )
+
+    with col3:
+        render_cta_card(
+            "Inspect drivers",
+            "See which factors influence predicted scores.",
+            "pages/4_Explainability.py",
+            "Open Model Insights",
+        )
 
 
 def render_sidebar_summary(raw_feature_names: list[str] | None = None):
@@ -172,12 +245,3 @@ def render_sidebar_summary(raw_feature_names: list[str] | None = None):
             unsafe_allow_html=True,
         )
 
-        st.markdown("---")
-        st.markdown(
-            """
-            <div class="ep-sidebar-nav-note">
-                Navigation: Home, Single Prediction, Batch Prediction, Explainability, About.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )

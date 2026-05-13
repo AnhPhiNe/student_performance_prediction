@@ -14,7 +14,7 @@ from src.loader import load_css, load_model_assets
 from src.helpers import build_default_input
 from src.predictor import coerce_input_types, predict_batch
 from src.validators import validate_input_dataframe
-from src.ui_components import render_section_title, render_empty_state
+from src.ui_components import render_page_header, render_empty_state
 
 
 set_config(transform_output="pandas")
@@ -165,7 +165,7 @@ def render_result_summary(result_df: pd.DataFrame):
 # =========================================================
 # 3) HEADER
 # =========================================================
-render_section_title(
+render_page_header(
     "Batch Prediction",
     "Upload a CSV file, validate the schema, score many student records, and download the result."
 )

@@ -13,6 +13,7 @@ st.set_page_config(
 
 from src.loader import load_css, load_model_assets
 from src.explainer import build_ridge_coefficient_table, get_top_positive_negative
+from src.ui_components import render_page_header
 
 
 css = load_css()
@@ -146,8 +147,10 @@ def render_feature_importance_chart(importance_df: pd.DataFrame):
 # =========================================================
 # 3) HEADER
 # =========================================================
-st.title("Model Insights")
-st.caption("Explain what factors influence predicted exam scores.")
+render_page_header(
+    "Model Insights",
+    "Explain what factors influence predicted exam scores."
+)
 
 st.info(
     "Ridge coefficients summarize how the model uses each feature during prediction."

@@ -26,7 +26,7 @@ from src.predictor import (
     generate_recommendations,
 )
 from src.validators import validate_input_dataframe
-from src.ui_components import render_section_title
+from src.ui_components import render_page_header
 
 
 set_config(transform_output="pandas")
@@ -256,7 +256,7 @@ if "form_data" not in st.session_state:
 # =========================================================
 # 4) HEADER
 # =========================================================
-render_section_title(
+render_page_header(
     "Single Student Prediction",
     "Adjust a student profile and run an end-to-end model prediction."
 )
