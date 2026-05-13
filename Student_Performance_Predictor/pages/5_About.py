@@ -1,21 +1,20 @@
 # pages/5_About.py
 
+import json
+from html import escape
+from pathlib import Path
+from typing import Any
+
 import streamlit as st
 
 st.set_page_config(
-    page_title="About | EduPredict",
+    page_title="Project Details | EduPredict",
     page_icon=":mortar_board:",
     layout="wide",
 )
 
-from src.loader import load_css, load_model_assets
-from src.ui_components import (
-    render_cta_card,
-    render_feature_cards,
-    render_page_header,
-    render_text_cards,
-    render_workflow_strip,
-)
+from src.config import BASE_DIR, FORM_GROUPS
+from src.loader import load_css, load_dataset, load_model_assets
 
 
 css = load_css()
@@ -24,77 +23,414 @@ if css:
 
 
 # =========================================================
-# 1) LOAD OPTIONAL MODEL INFO
+# 1) LOAD OPTIONAL PROJECT METADATA
 # =========================================================
-assets_loaded = False
-assets_error = None
-raw_feature_names = []
-best_params = None
+models_dir = Path(BASE_DIR) / "models"
+metadata_path = models_dir / "model_metadata.json"
+
+df = None
+raw_feature_names: list[str] = []
+raw_survivors: list[str] = []
+best_params: dict[str, Any] | None = None
+model_metadata: dict[str, Any] | None = None
+metadata_source_path: Path | None = None
 model_name = "Ridge Regression"
+required_metrics = ("r2", "mae", "rmse")
 
 try:
-    full_pipeline, core_model, raw_feature_names, raw_survivors, best_params = load_model_assets()
-    assets_loaded = True
-    if best_params and "model_name" in best_params:
-        model_name = best_params["model_name"]
-except Exception as e:
-    assets_error = str(e)
+    df = load_dataset()
+except Exception:
+    df = None
+
+try:
+    _, _, raw_feature_names, raw_survivors, best_params = load_model_assets()
+    if best_params:
+        configured_model_name = best_params.get("model_name")
+        if configured_model_name and configured_model_name != "Ridge":
+            model_name = str(configured_model_name)
+except Exception:
+    raw_feature_names = []
+    raw_survivors = []
+    best_params = None
+
+if metadata_path.exists():
+    try:
+        with metadata_path.open("r", encoding="utf-8") as f:
+            candidate_metadata = json.load(f)
+
+        metrics = candidate_metadata.get("metrics") if isinstance(candidate_metadata, dict) else None
+        if isinstance(metrics, dict):
+            for metric_name in required_metrics:
+                float(metrics[metric_name])
+
+            model_metadata = candidate_metadata
+            metadata_source_path = metadata_path
+            model_name = str(candidate_metadata.get("final_model_name", model_name))
+    except Exception:
+        model_metadata = None
+        metadata_source_path = None
 
 
 # =========================================================
-# 2) HEADER
+# 2) SMALL UI HELPERS
 # =========================================================
-render_page_header(
-    "About EduPredict",
-    "A compact case study showing how a trained ML model becomes a usable prediction product.",
+def metric_from_metadata(metric_name: str, decimals: int = 3) -> str:
+    metrics = model_metadata.get("metrics") if isinstance(model_metadata, dict) else None
+    if not isinstance(metrics, dict):
+        return "Not available"
+
+    value = metrics.get(metric_name)
+    if value is None:
+        return "Not available"
+
+    try:
+        return f"{float(value):.{decimals}f}"
+    except (TypeError, ValueError):
+        return "Not available"
+
+
+def dataset_rows() -> str:
+    if df is not None:
+        return f"{len(df):,}"
+    return "6,607"
+
+
+def feature_count() -> str:
+    if raw_feature_names:
+        return str(len(raw_feature_names))
+    return "19"
+
+
+def html_table(headers: list[str], rows: list[list[str]]) -> str:
+    header_html = "".join(f"<th>{escape(header)}</th>" for header in headers)
+    row_html = []
+    for row in rows:
+        cells = "".join(f"<td>{cell}</td>" for cell in row)
+        row_html.append(f"<tr>{cells}</tr>")
+
+    return f"""
+    <table class="ep-doc-table">
+        <thead><tr>{header_html}</tr></thead>
+        <tbody>{''.join(row_html)}</tbody>
+    </table>
+    """
+
+
+def render_doc_table(headers: list[str], rows: list[list[str]]):
+    st.markdown(html_table(headers, rows), unsafe_allow_html=True)
+
+
+def label_value_rows_html(rows: list[tuple[str, str]]) -> str:
+    row_html = "".join(
+        (
+            "<div class='ep-doc-row'>"
+            f"<span>{escape(label)}</span>"
+            f"<strong>{value}</strong>"
+            "</div>"
+        )
+        for label, value in rows
+    )
+    return f"<div class='ep-doc-rows'>{row_html}</div>"
+
+
+def render_badges(labels: list[str]):
+    badge_html = "".join(f"<span>{escape(label)}</span>" for label in labels)
+    st.markdown(f"<div class='ep-doc-badges'>{badge_html}</div>", unsafe_allow_html=True)
+
+
+def render_pipeline_flow(steps: list[str]):
+    step_html = []
+    for index, step in enumerate(steps):
+        step_html.append(f"<span class='ep-flow-step'>{escape(step)}</span>")
+        if index < len(steps) - 1:
+            step_html.append("<span class='ep-flow-arrow'>&rarr;</span>")
+
+    st.markdown(f"<div class='ep-flow-row'>{''.join(step_html)}</div>", unsafe_allow_html=True)
+
+
+def render_section_title(title: str, caption: str | None = None):
+    st.markdown(f"<h2 class='ep-doc-section-title'>{escape(title)}</h2>", unsafe_allow_html=True)
+    if caption:
+        st.markdown(f"<p class='ep-doc-section-caption'>{escape(caption)}</p>", unsafe_allow_html=True)
+
+
+def render_checklist(items: list[str]):
+    item_html = "".join(f"<li>{escape(item)}</li>" for item in items)
+    st.markdown(f"<ul class='ep-doc-checklist'>{item_html}</ul>", unsafe_allow_html=True)
+
+
+def code_list(items: list[str]) -> str:
+    return ", ".join(f"<code>{escape(item)}</code>" for item in items)
+
+
+st.markdown(
+    """
+    <style>
+        .ep-doc-hero {
+            margin: 0 0 1.2rem 0;
+            padding: 0.2rem 0 0.35rem 0;
+        }
+
+        .ep-doc-title {
+            margin: 0 0 0.45rem 0;
+            color: var(--ep-text);
+            font-size: 2.45rem;
+            font-weight: 850;
+            line-height: 1.12;
+        }
+
+        .ep-doc-subtitle {
+            max-width: 860px;
+            margin: 0;
+            color: var(--ep-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .ep-doc-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.8rem;
+        }
+
+        .ep-doc-badges span {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.8rem;
+            padding: 0.28rem 0.68rem;
+            border: 1px solid #dbe3ef;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 750;
+        }
+
+        .ep-doc-section-title {
+            margin: 1.55rem 0 0.35rem 0;
+            color: var(--ep-text);
+            font-size: 1.34rem;
+            font-weight: 850;
+            line-height: 1.25;
+        }
+
+        .ep-doc-section-caption {
+            margin: 0 0 0.7rem 0;
+            color: var(--ep-muted);
+            font-size: 0.94rem;
+            line-height: 1.55;
+        }
+
+        .ep-doc-panel {
+            height: 100%;
+            min-height: 232px;
+            padding: 0.95rem 1rem;
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius);
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+            box-sizing: border-box;
+        }
+
+        .ep-doc-panel h3 {
+            margin: 0 0 0.62rem 0;
+            color: var(--ep-text);
+            font-size: 1rem;
+            font-weight: 850;
+        }
+
+        .ep-doc-rows {
+            display: grid;
+            gap: 0;
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius);
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .ep-doc-row {
+            display: grid;
+            grid-template-columns: minmax(140px, 0.75fr) minmax(0, 1.25fr);
+            gap: 0.75rem;
+            padding: 0.62rem 0.72rem;
+            border-top: 1px solid #eef2f7;
+            align-items: center;
+        }
+
+        .ep-doc-row:first-child {
+            border-top: 0;
+        }
+
+        .ep-doc-row span {
+            color: var(--ep-muted);
+            font-size: 0.84rem;
+            font-weight: 750;
+        }
+
+        .ep-doc-row strong {
+            color: var(--ep-text);
+            font-size: 0.95rem;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        .ep-doc-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border: 1px solid var(--ep-border);
+            border-radius: var(--ep-radius);
+            background: #ffffff;
+            font-size: 0.93rem;
+        }
+
+        .ep-doc-table th {
+            text-align: left;
+            padding: 0.62rem 0.72rem;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--ep-border);
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .ep-doc-table td {
+            vertical-align: top;
+            padding: 0.62rem 0.72rem;
+            border-bottom: 1px solid #eef2f7;
+            color: #334155;
+            line-height: 1.45;
+        }
+
+        .ep-doc-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .ep-doc-table code {
+            color: #1e3a8a;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 0.1rem 0.3rem;
+            font-size: 0.84rem;
+        }
+
+        .ep-doc-checklist {
+            display: grid;
+            gap: 0.42rem;
+            margin: 0.2rem 0 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .ep-doc-checklist li {
+            position: relative;
+            padding: 0.48rem 0.65rem 0.48rem 1.95rem;
+            border: 1px solid #e6edf6;
+            border-radius: var(--ep-radius);
+            background: #ffffff;
+            color: #334155;
+            font-size: 0.93rem;
+            line-height: 1.4;
+        }
+
+        .ep-doc-checklist li:before {
+            content: "";
+            position: absolute;
+            left: 0.72rem;
+            top: 0.78rem;
+            width: 0.42rem;
+            height: 0.42rem;
+            border-radius: 999px;
+            background: var(--ep-primary);
+        }
+
+        .ep-doc-note {
+            margin: 0.2rem 0 0.55rem 0;
+            padding: 0.72rem 0.85rem;
+            border: 1px solid #fed7aa;
+            border-radius: var(--ep-radius);
+            background: #fff7ed;
+            color: #7c2d12;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .ep-doc-footer {
+            margin-top: 1rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid var(--ep-border);
+            color: #475569;
+            font-size: 0.94rem;
+            line-height: 1.5;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-if assets_error:
-    st.warning(
-        "Model metadata could not be loaded on this page, but the portfolio summary is still available."
-    )
+
+# =========================================================
+# 3) HEADER / HERO
+# =========================================================
+st.markdown(
+    """
+    <section class="ep-doc-hero">
+        <h1 class="ep-doc-title">Project Details</h1>
+        <p class="ep-doc-subtitle">
+            Technical overview of the dataset, model pipeline, evaluation, and deployment workflow behind EduPredict.
+        </p>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
+render_badges(["Ridge Regression", "6.6k Rows", "19 Features", "sklearn Pipeline"])
 
 
 # =========================================================
-# 3) PROJECT SUMMARY
+# 4) EXECUTIVE SUMMARY
 # =========================================================
-feature_count = str(len(raw_feature_names)) if assets_loaded and raw_feature_names else "19"
+render_section_title(
+    "Executive Summary",
+    "A recruiter-facing snapshot of the product goal, model choice, and evaluation status.",
+)
 
-st.markdown("### Project Summary")
-summary_col, snapshot_col = st.columns([1.55, 1], gap="large")
-
-with summary_col:
-    st.markdown(
-        """
-        <div class="ep-about-summary">
-            <div>
-                <span>Problem</span>
-                <p>Estimate student exam performance from academic, lifestyle, family, and school context factors.</p>
-            </div>
-            <div>
-                <span>What I built</span>
-                <p>A Streamlit ML product with single prediction, batch CSV scoring, validation, and model insight views.</p>
-            </div>
-            <div>
-                <span>Outcome</span>
-                <p>A polished app that shows the full path from trained model artifact to usable inference workflow.</p>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+goal_col, model_col = st.columns([1.05, 0.95], gap="large")
+with goal_col:
+    goal_rows = label_value_rows_html(
+        [
+            ("Objective", "Predict student exam performance"),
+            ("Data", "Structured tabular inputs"),
+            ("Inference", "Single profile and batch CSV scoring"),
+            ("Product Lens", "Inspectable ML workflow"),
+        ]
     )
-
-with snapshot_col:
     st.markdown(
         f"""
-        <div class="ep-about-snapshot">
-            <div class="ep-about-snapshot-title">Project Snapshot</div>
-            <div class="ep-about-snapshot-grid">
-                <div><span>Product</span><strong>ML App</strong></div>
-                <div><span>Model</span><strong>{model_name}</strong></div>
-                <div><span>Workflow</span><strong>Single + Batch</strong></div>
-                <div><span>Inputs</span><strong>{feature_count} features</strong></div>
-            </div>
+        <div class="ep-doc-panel">
+            <h3>Project Goal</h3>
+            {goal_rows}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with model_col:
+    final_model_rows = label_value_rows_html(
+        [
+            ("Model", escape(model_name)),
+            ("R2", metric_from_metadata("r2")),
+            ("MAE", metric_from_metadata("mae", decimals=2)),
+            ("RMSE", metric_from_metadata("rmse", decimals=2)),
+        ]
+    )
+    st.markdown(
+        f"""
+        <div class="ep-doc-panel">
+            <h3>Final Model</h3>
+            {final_model_rows}
         </div>
         """,
         unsafe_allow_html=True,
@@ -102,147 +438,128 @@ with snapshot_col:
 
 
 # =========================================================
-# 4) WHAT I BUILT
+# 5) DATASET OVERVIEW
 # =========================================================
-st.markdown("### What I Built")
-render_feature_cards([
-    ("1", "Single Prediction", "Interactive profile scoring with a clear result and concise recommendation."),
-    ("2", "Batch Prediction", "CSV validation, preview, prediction summary, and downloadable results."),
-    ("3", "Model Insights", "Directional drivers and overall influence views from Ridge coefficients."),
-])
-st.markdown("<div class='ep-section-gap'></div>", unsafe_allow_html=True)
+render_section_title("Data & Model", "Dataset shape, target contract, and feature taxonomy.")
 
+render_doc_table(
+    ["Item", "Value"],
+    [
+        ["Rows", dataset_rows()],
+        ["Target", "<code>Exam_Score</code>"],
+        ["Inputs", feature_count()],
+        ["Input Type", "Structured Tabular Data"],
+    ],
+)
 
-# =========================================================
-# 5) TECHNICAL ARCHITECTURE
-# =========================================================
-st.markdown("### Technical Architecture")
-st.caption("Saved sklearn pipeline for consistent inference.")
+st.markdown("#### Feature Categories")
+render_doc_table(
+    ["Category", "Description", "Count"],
+    [
+        ["Academic Habits", "Study behavior and academic history", "4"],
+        ["Lifestyle", "Sleep, activity, and motivation indicators", "4"],
+        ["Family & Resources", "Household support and access context", "5"],
+        ["School & Personal", "School environment and student-specific context", "6"],
+    ],
+)
 
-render_workflow_strip([
-    "Input",
-    "Validate",
-    "Pipeline",
-    "Predict",
-    "Result",
-])
-
-with st.expander("View technical details", expanded=False):
-    st.markdown("#### Module structure")
-    st.markdown(
-        """
-        - `src/config.py`: shared configuration and UI labels
-        - `src/loader.py`: loads CSS, model assets, and data
-        - `src/validators.py`: validates input schema and values
-        - `src/predictor.py`: prediction flow and recommendations
-        - `src/explainer.py`: coefficient-based model insight helpers
-        - `src/ui_components.py`: reusable Streamlit UI blocks
-        - `pages/`: user-facing Streamlit pages
-        """
+with st.expander("View raw feature names", expanded=False):
+    render_doc_table(
+        ["Category", "Raw features"],
+        [
+            ["Academic Habits", code_list(FORM_GROUPS["Academic Habits"])],
+            ["Lifestyle", code_list(FORM_GROUPS["Lifestyle"])],
+            ["Family & Resources", code_list(FORM_GROUPS["Family & Learning Environment"])],
+            ["School & Personal", code_list(FORM_GROUPS["School & Personal Context"])],
+        ],
     )
-
-    st.markdown("#### Model artifacts")
-    st.markdown(
-        """
-        - `hcmue_student_full_pipeline_v1_0.joblib`: full inference pipeline
-        - `ridge_core_model.joblib`: core Ridge model used for coefficient interpretation
-        - `raw_feature_names.joblib`: input schema contract for forms and CSV uploads
-        - `raw_survivors.joblib`: retained raw features from the feature selection workflow
-        """
-    )
-
-    st.markdown("#### Training metadata")
-    if best_params:
-        st.json(best_params)
+    if raw_survivors:
+        st.caption(f"Selected raw features available: {len(raw_survivors)}.")
     else:
-        st.info("Hyperparameter metadata is not available on this page.")
+        st.caption("Selected raw features are shown when raw_survivors.joblib is available.")
 
 
 # =========================================================
-# 6) ENGINEERING HIGHLIGHTS
+# 6) MODEL PIPELINE
 # =========================================================
-st.markdown("### Engineering Highlights")
-render_text_cards([
-    ("ML Pipeline", "Artifact-based inference with consistent preprocessing."),
-    ("Product UX", "Single and batch workflows with validation."),
-    ("Model Insight", "Readable coefficient driver views."),
-])
+render_section_title("Pipeline & Artifacts", "Compact view of inference flow and saved production artifacts.")
 
+render_pipeline_flow(
+    [
+        "Raw Input",
+        "Validation",
+        "Feature Engineering",
+        "Preprocessing",
+        "Ridge Regression",
+        "Predicted Score",
+    ]
+)
 
-# =========================================================
-# 7) LIMITATIONS & NEXT STEPS
-# =========================================================
-st.markdown("### Limitations & Next Steps")
-st.warning("Demo only. Not for real educational decisions.")
+st.markdown("#### Pipeline Notes")
+render_checklist(
+    [
+        "Numeric median imputation",
+        "Ordinal/categorical encoding",
+        "Train-only feature selection",
+        "Raw-input inference pipeline",
+        "Schema-aligned batch validation",
+    ]
+)
 
-limit_col1, limit_col2 = st.columns(2, gap="large")
+st.markdown("#### Artifacts & Reproducibility")
+render_doc_table(
+    ["Artifact", "Purpose"],
+    [
+        ["<code>hcmue_student_full_pipeline_v1_0.joblib</code>", "deployable inference pipeline"],
+        ["<code>ridge_core_model.joblib</code>", "coefficient-based insight support"],
+        ["<code>raw_feature_names.joblib</code>", "input schema contract"],
+        ["<code>raw_survivors.joblib</code>", "selected raw features"],
+        ["<code>best_hyperparameters.json</code>", "selected configuration"],
+        ["<code>model_metadata.json</code>", "metrics and metadata"],
+    ],
+)
 
-with limit_col1:
-    st.markdown(
-        """
-        <div class="ep-list-card">
-            <div class="ep-list-card-title">Current limitations</div>
-            <div class="ep-list-row">Limited high-score samples</div>
-            <div class="ep-list-row">Global, non-causal insights</div>
-            <div class="ep-list-row">Partly rule-based recommendations</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-with limit_col2:
-    st.markdown(
-        """
-        <div class="ep-list-card">
-            <div class="ep-list-card-title">Next steps</div>
-            <div class="ep-list-row">Add model versioning</div>
-            <div class="ep-list-row">Improve local explanations</div>
-            <div class="ep-list-row">Expand inference tests</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-st.markdown("<div class='ep-tight-spacer'></div>", unsafe_allow_html=True)
-
-with st.expander("View future improvements", expanded=False):
-    st.markdown(
-        """
-        - Deployment polish for Streamlit Cloud
-        - Prediction report export
-        - Model performance summary page
-        - More robust monitoring/logging for production-style inference
-        - Expanded test coverage for edge cases
-        """
-    )
+render_checklist(
+    [
+        "Dedicated training script",
+        "random_state=42",
+        "Export overwrite protection",
+        "Notebook separated from production training",
+    ]
+)
 
 
 # =========================================================
-# 8) CTA
+# 7) RELIABILITY, LIMITATIONS, ROADMAP
 # =========================================================
-st.markdown("### Explore the App")
-cta_col1, cta_col2, cta_col3 = st.columns(3, gap="large")
+render_section_title("Limitations & Responsible Use")
 
-with cta_col1:
-    render_cta_card(
-        "Predict one student",
-        "Use the interactive form to estimate a single student's exam score.",
-        "pages/2_Single_Prediction.py",
-        "Predict One Student",
-    )
+render_checklist(
+    [
+        "Predictions are correlational, not causal explanations",
+        "Dataset limitations may affect generalization",
+        "Not for real educational decision-making",
+    ]
+)
 
-with cta_col2:
-    render_cta_card(
-        "Score a CSV",
-        "Validate a batch file, run predictions, and download the results.",
-        "pages/3_Batch_Prediction.py",
-        "Score CSV File",
-    )
+render_section_title("Roadmap / Repository", "Next engineering improvements and release status.")
+st.markdown("#### Planned Improvements")
+render_checklist(
+    [
+        "Schema tests",
+        "Model versioning",
+        "Lightweight monitoring",
+        "Local explanation support",
+        "API deployment",
+    ]
+)
 
-with cta_col3:
-    render_cta_card(
-        "Inspect model drivers",
-        "See which model drivers push predictions upward or downward.",
-        "pages/4_Explainability.py",
-        "Inspect Drivers",
-    )
+st.markdown(
+    """
+    <div class="ep-doc-footer">
+        <strong>Repository:</strong> Repository link will be added after public release.<br>
+        <strong>Author:</strong> EduPredict project owner.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
