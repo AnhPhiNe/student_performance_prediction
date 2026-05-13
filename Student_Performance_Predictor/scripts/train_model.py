@@ -390,6 +390,69 @@ def prepare_modeling_matrices(
     return X_train_encoded, X_test_encoded, raw_survivors, selected_preprocessor
 
 
+def tune_random_forest(
+    X_train_encoded: pd.DataFrame,
+    y_train: pd.Series,
+) -> tuple[RandomForestRegressor, float, dict[str, Any]]:
+    """
+    Tune the same Random Forest search space without putting None in param_grid.
+
+    Passing None inside GridSearchCV param_grid can trigger a numpy.ma cast
+    warning while sklearn builds masked parameter arrays. We keep the original
+    candidate set by running the max_depth=None candidates through the estimator
+    default, then searching numeric max_depth values separately.
+    """
+    search_spaces = [
+        {
+            "fixed_params": {"max_depth": None},
+            "estimator": RandomForestRegressor(random_state=RANDOM_STATE, max_depth=None),
+            "param_grid": {
+                "n_estimators": [200, 400],
+                "min_samples_leaf": [2, 5],
+                "max_features": ["sqrt", 0.8],
+            },
+        },
+        {
+            "fixed_params": {},
+            "estimator": RandomForestRegressor(random_state=RANDOM_STATE),
+            "param_grid": {
+                "n_estimators": [200, 400],
+                "max_depth": [6, 10],
+                "min_samples_leaf": [2, 5],
+                "max_features": ["sqrt", 0.8],
+            },
+        },
+    ]
+
+    best_estimator: RandomForestRegressor | None = None
+    best_score = -np.inf
+    best_params: dict[str, Any] = {}
+
+    for search_space in search_spaces:
+        grid = GridSearchCV(
+            estimator=search_space["estimator"],
+            param_grid=search_space["param_grid"],
+            cv=CV_FOLDS,
+            scoring="r2",
+            n_jobs=-1,
+            error_score="raise",
+        )
+        grid.fit(X_train_encoded, y_train)
+
+        if grid.best_score_ > best_score:
+            best_estimator = grid.best_estimator_
+            best_score = float(grid.best_score_)
+            best_params = {
+                **search_space["fixed_params"],
+                **grid.best_params_,
+            }
+
+    if best_estimator is None:
+        raise RuntimeError("Random Forest tuning did not produce a fitted estimator.")
+
+    return best_estimator, best_score, best_params
+
+
 def tune_and_compare_models(
     X_train_encoded: pd.DataFrame,
     X_test_encoded: pd.DataFrame,
@@ -453,22 +516,13 @@ def tune_and_compare_models(
     best_hyperparameters["Lasso Regression"] = lasso_grid.best_params_
 
     logging.info("Tuning Random Forest")
-    rf_grid = GridSearchCV(
-        estimator=RandomForestRegressor(random_state=RANDOM_STATE),
-        param_grid={
-            "n_estimators": [200, 400],
-            "max_depth": [None, 6, 10],
-            "min_samples_leaf": [2, 5],
-            "max_features": ["sqrt", 0.8],
-        },
-        cv=CV_FOLDS,
-        scoring="r2",
-        n_jobs=-1,
+    rf_model, rf_score, rf_params = tune_random_forest(
+        X_train_encoded=X_train_encoded,
+        y_train=y_train,
     )
-    rf_grid.fit(X_train_encoded, y_train)
-    models["Random Forest"] = rf_grid.best_estimator_
-    cv_scores["Random Forest"] = rf_grid.best_score_
-    best_hyperparameters["Random Forest"] = rf_grid.best_params_
+    models["Random Forest"] = rf_model
+    cv_scores["Random Forest"] = rf_score
+    best_hyperparameters["Random Forest"] = rf_params
 
     try:
         from xgboost import XGBRegressor
@@ -644,7 +698,6 @@ def export_artifacts(
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(output_dir)
 
-    log_export_plan(paths)
     ensure_no_existing_artifacts(paths)
 
     ridge_model = full_pipeline.named_steps["model"]
