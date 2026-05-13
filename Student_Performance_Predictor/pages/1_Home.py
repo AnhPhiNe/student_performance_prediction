@@ -45,16 +45,12 @@ def get_model_label() -> str:
 # =========================================================
 render_page_header(
     title="EduPredict",
-    subtitle=(
-        "A Streamlit portfolio app that predicts student exam performance from academic, "
-        "lifestyle, family, and school context factors."
-    ),
-    badge_text="ML Portfolio Project",
+    subtitle="Predict student exam performance from structured academic, lifestyle, family, and school context data.",
+    badge_text="Student Performance ML App",
 )
 
 st.info(
-    "Use the sidebar to open Single Prediction for one student, Batch Prediction for CSV files, "
-    "or Explainability to inspect model drivers."
+    "Choose a workflow below to score one student, process a CSV batch, or inspect model drivers."
 )
 
 
@@ -62,6 +58,11 @@ st.info(
 # 4) PROJECT STATUS
 # =========================================================
 dataset_rows = f"{len(df):,}" if df is not None else "Missing"
+render_section_title(
+    "Project Snapshot",
+    "A quick view of the prediction product currently loaded in the app."
+)
+
 render_kpi_cards([
     ("Dataset Rows", dataset_rows),
     ("Input Features", str(len(raw_feature_names))),
@@ -71,77 +72,62 @@ render_kpi_cards([
 
 
 # =========================================================
-# 5) WHAT THE APP DOES
+# 5) MAIN TOOLS
 # =========================================================
 render_section_title(
-    "What the app does",
-    "Three practical workflows for model inference and interpretation."
-)
-
-render_feature_cards([
-    ("1", "Single Prediction", "Estimate one student's exam score from an interactive profile."),
-    ("2", "Batch Prediction", "Upload a CSV file, validate it, and score many students at once."),
-    ("3", "Model Insights", "Review the strongest positive and negative model drivers."),
-])
-
-
-# =========================================================
-# 6) HOW IT WORKS
-# =========================================================
-render_section_title(
-    "How it works",
-    "A short end-to-end flow from user input to interpretable result."
-)
-
-render_workflow_strip([
-    "Enter Profile",
-    "Validate Input",
-    "Predict Score",
-    "Interpret Result",
-])
-
-
-# =========================================================
-# 7) NEXT ACTIONS
-# =========================================================
-render_section_title(
-    "Next actions",
-    "Choose the workflow that matches what you want to try first."
+    "What would you like to do?",
+    "Choose one of the main tools below to predict scores, process a CSV file, or inspect model insights."
 )
 
 cta_col1, cta_col2, cta_col3 = st.columns(3, gap="large")
 
 with cta_col1:
     render_cta_card(
-        "Start single prediction",
-        "Build one student profile and see the predicted score immediately.",
+        "Single Prediction",
+        "Estimate one student's exam score from an interactive profile.",
         "pages/2_Single_Prediction.py",
         "Open Single Prediction",
     )
 
 with cta_col2:
     render_cta_card(
-        "Try batch prediction",
-        "Download the template, upload a CSV, validate records, and export results.",
+        "Batch Prediction",
+        "Upload a CSV file, validate records, score the full batch, and export results.",
         "pages/3_Batch_Prediction.py",
         "Open Batch Prediction",
     )
 
 with cta_col3:
     render_cta_card(
-        "View model insights",
-        "Understand which features push predictions upward or downward.",
+        "Model Insights",
+        "Review the strongest positive and negative drivers behind model predictions.",
         "pages/4_Explainability.py",
         "Open Model Insights",
     )
 
 
 # =========================================================
-# 8) OPTIONAL DATASET SAMPLE
+# 6) HOW IT WORKS
+# =========================================================
+render_section_title(
+    "How the App Works",
+    "A high-level flow from uploaded or entered data to usable prediction results."
+)
+
+render_workflow_strip([
+    "Input Data",
+    "Validate Schema",
+    "Predict Score",
+    "Review Results",
+])
+
+
+# =========================================================
+# 7) OPTIONAL DATASET SAMPLE
 # =========================================================
 with st.expander("View sample dataset", expanded=False):
     if df is None:
         render_empty_state("Dataset is not available, so a sample cannot be shown.")
     else:
-        st.caption("A small sample is shown for context only. Prediction workflows are available from the sidebar.")
+        st.caption("Showing a small sample for context only.")
         st.dataframe(df.head(5), use_container_width=True, hide_index=True)

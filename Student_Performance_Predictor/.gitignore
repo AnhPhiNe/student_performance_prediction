@@ -2,7 +2,7 @@
 venv/
 env/
 ENV/
-
+models_candidate/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -13,6 +13,8 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+
+artifacts/
 
 .streamlit/secrets.toml
 
