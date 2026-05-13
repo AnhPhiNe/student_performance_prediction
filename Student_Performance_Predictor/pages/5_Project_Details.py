@@ -1,4 +1,4 @@
-# pages/5_About.py
+# pages/5_Project_Details.py
 
 import json
 from html import escape
@@ -542,22 +542,27 @@ render_checklist(
     ]
 )
 
-render_section_title("Roadmap / Repository", "Next engineering improvements and release status.")
-st.markdown("#### Planned Improvements")
-render_checklist(
+render_section_title(
+    "Next Improvements",
+    "Focused engineering follow-ups for model reliability, deployment, and maintainability.",
+)
+
+render_doc_table(
+    ["Area", "Planned improvement"],
     [
-        "Schema tests",
-        "Model versioning",
-        "Lightweight monitoring",
-        "Local explanation support",
-        "API deployment",
-    ]
+        ["Validation", "Schema tests"],
+        ["Model lifecycle", "Model versioning"],
+        ["Operations", "Lightweight monitoring"],
+        ["Explainability", "Local explanation support"],
+        ["Deployment", "API deployment"],
+    ],
 )
 
 st.markdown(
     """
     <div class="ep-doc-footer">
-        <strong>Repository:</strong> Repository link will be added after public release.<br>
+        <strong>Project Links</strong><br>
+        Repository link will be added after public release.<br>
         <strong>Author:</strong> EduPredict project owner.
     </div>
     """,
