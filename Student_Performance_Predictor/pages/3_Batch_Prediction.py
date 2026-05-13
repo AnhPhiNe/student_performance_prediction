@@ -1,6 +1,7 @@
 # pages/3_Batch_Prediction.py
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 st.set_page_config(
     page_title="Batch Prediction | EduPredict",
@@ -10,10 +11,10 @@ st.set_page_config(
 
 from sklearn import set_config
 
+from src.config import CATEGORICAL_OPTIONS, NUMERIC_RANGES
 from src.loader import load_css, load_model_assets
 from src.helpers import build_default_input
 from src.predictor import coerce_input_types, predict_batch
-from src.validators import validate_input_dataframe
 from src.ui_components import render_page_header, render_empty_state
 
 
@@ -36,6 +37,18 @@ except Exception as e:
 # =========================================================
 # 2) HELPERS
 # =========================================================
+CATEGORICAL_DEFAULTS = {
+    "Teacher_Quality": "Medium",
+    "Parental_Education_Level": "High School",
+    "Distance_from_Home": "Moderate",
+    "Access_to_Resources": "Medium",
+    "Motivation_Level": "Medium",
+    "Parental_Involvement": "Medium",
+    "Family_Income": "Medium",
+    "Peer_Influence": "Neutral",
+}
+
+
 def create_template_dataframe(required_columns: list[str]) -> pd.DataFrame:
     default_row = build_default_input(required_columns)
     return pd.DataFrame([default_row])
@@ -45,93 +58,200 @@ def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False).encode("utf-8-sig")
 
 
-def extract_quoted_column(message: str) -> str | None:
-    parts = message.split("'")
-    if len(parts) >= 2:
-        return parts[1]
-    return None
+def get_missing_mask(series: pd.Series) -> pd.Series:
+    text_values = series.astype("string").str.strip()
+    return series.isna() | text_values.isna() | text_values.eq("")
 
 
-def parse_extra_columns(warnings: list[str]) -> list[str]:
-    extra_columns = []
-    for warning in warnings:
-        if "Unexpected extra columns" not in warning:
+def render_extra_column_warning(uploaded_columns: list[str], required_columns: list[str]):
+    extra_columns = [column for column in uploaded_columns if column not in required_columns]
+
+    if not extra_columns:
+        return
+
+    st.warning("Extra columns were found. They are not used by the prediction model.")
+
+    for column in extra_columns:
+        if column == "Exam_Score":
+            st.write(
+                "- `Exam_Score` is the target column used for training. "
+                "Remove it before prediction; the app will ignore it if present."
+            )
+        else:
+            st.write(f"- `{column}` will be ignored.")
+
+
+def validate_required_columns(uploaded_df: pd.DataFrame, required_columns: list[str]) -> bool:
+    missing_columns = [column for column in required_columns if column not in uploaded_df.columns]
+
+    if not missing_columns:
+        return True
+
+    st.error("Validation failed. The uploaded file is missing required input columns.")
+    st.write("Add these columns to the CSV file before running batch prediction:")
+    for column in missing_columns:
+        st.write(f"- `{column}`")
+
+    st.markdown("#### Suggested fix")
+    st.write("- Download the template from Step 1.")
+    st.write("- Copy your batch data into the matching columns.")
+    st.write("- Re-upload the completed CSV file.")
+    return False
+
+
+def render_numeric_missing_warning(uploaded_df: pd.DataFrame, required_columns: list[str]):
+    missing_counts = []
+
+    for column in NUMERIC_RANGES:
+        if column not in required_columns or column not in uploaded_df.columns:
             continue
 
-        raw_columns = warning.split(":", 1)[-1]
-        raw_columns = raw_columns.replace("[", "").replace("]", "")
-        for item in raw_columns.split(","):
-            column = item.strip().strip("'").strip('"')
-            if column:
-                extra_columns.append(column)
+        missing_count = int(get_missing_mask(uploaded_df[column]).sum())
+        if missing_count:
+            missing_counts.append((column, missing_count))
 
-    return extra_columns
+    if not missing_counts:
+        return
+
+    st.warning(
+        "Some numeric values are missing. They will be handled by the model pipeline median imputer."
+    )
+    for column, missing_count in missing_counts:
+        st.write(f"- `{column}`: {missing_count} missing value(s)")
 
 
-def group_validation_errors(errors: list[str]) -> dict[str, list[str]]:
-    grouped_errors = {
-        "missing_values": [],
-        "out_of_range": [],
-        "other": [],
-    }
+def validate_numeric_values(uploaded_df: pd.DataFrame, required_columns: list[str]) -> bool:
+    errors = []
 
+    for column, (min_value, max_value) in NUMERIC_RANGES.items():
+        if column not in required_columns or column not in uploaded_df.columns:
+            continue
+
+        missing_mask = get_missing_mask(uploaded_df[column])
+        numeric_values = pd.to_numeric(uploaded_df[column], errors="coerce")
+        invalid_numeric_mask = numeric_values.isna() & ~missing_mask
+
+        if invalid_numeric_mask.any():
+            errors.append(f"`{column}` contains non-numeric value(s).")
+            continue
+
+        valid_numeric_values = numeric_values[~missing_mask]
+        out_of_range_mask = (valid_numeric_values < min_value) | (valid_numeric_values > max_value)
+        if out_of_range_mask.any():
+            errors.append(f"`{column}` must be between {min_value} and {max_value}.")
+
+    if not errors:
+        return True
+
+    st.error("Validation failed. Please fix invalid numeric values before prediction.")
     for error in errors:
-        column = extract_quoted_column(error)
-
-        if "contains missing values" in error:
-            grouped_errors["missing_values"].append(column or error)
-        elif "must be between" in error:
-            grouped_errors["out_of_range"].append(error)
-        else:
-            grouped_errors["other"].append(error)
-
-    return grouped_errors
+        st.write(f"- {error}")
+    return False
 
 
-def render_validation_report(validation: dict):
-    extra_columns = parse_extra_columns(validation["warnings"])
-    grouped_errors = group_validation_errors(validation["errors"])
+def fill_allowed_categorical_missing_values(batch_df: pd.DataFrame, required_columns: list[str]) -> pd.DataFrame:
+    batch_df = batch_df.copy()
+    filled_columns = []
 
-    if extra_columns:
-        st.warning("Extra columns were found. They are not used by the prediction model.")
+    for column, default_value in CATEGORICAL_DEFAULTS.items():
+        if column not in required_columns or column not in batch_df.columns:
+            continue
 
-        for column in extra_columns:
-            if column == "Exam_Score":
-                st.write(
-                    "- `Exam_Score` is the target column used for training. "
-                    "Remove it before prediction; the app will ignore it if present."
-                )
-            else:
-                st.write(f"- `{column}` will be ignored.")
+        missing_mask = get_missing_mask(batch_df[column])
+        missing_count = int(missing_mask.sum())
+        if not missing_count:
+            continue
 
-    if not validation["is_valid"]:
-        st.error("Validation failed. Please clean the file and upload it again.")
+        batch_df.loc[missing_mask, column] = default_value
+        filled_columns.append((column, missing_count, default_value))
 
-        if grouped_errors["missing_values"]:
-            st.markdown("#### Missing values")
-            st.write("These required input columns contain empty values:")
-            for column in grouped_errors["missing_values"]:
-                st.write(f"- `{column}`")
+    if filled_columns:
+        st.warning("Some categorical values were missing and were filled with neutral defaults.")
+        for column, missing_count, default_value in filled_columns:
+            st.write(f"- `{column}`: {missing_count} missing value(s) filled with `{default_value}`")
 
-        if grouped_errors["out_of_range"]:
-            st.markdown("#### Out-of-range values")
-            for error in grouped_errors["out_of_range"]:
-                st.write(f"- {error}")
+    return batch_df
 
-        if grouped_errors["other"]:
-            st.markdown("#### Other validation issues")
-            for error in grouped_errors["other"]:
-                st.write(f"- {error}")
 
-        st.markdown("#### Suggested fix")
-        st.write("- Download the template from Step 1.")
-        st.write("- Fill all required input feature columns.")
-        st.write("- Remove `Exam_Score` before prediction.")
-        st.write("- Re-upload the cleaned CSV file.")
-        return False
+def validate_unfilled_categorical_missing_values(batch_df: pd.DataFrame, required_columns: list[str]) -> bool:
+    blocking_missing = []
+
+    for column in CATEGORICAL_OPTIONS:
+        if column not in required_columns or column not in batch_df.columns:
+            continue
+        if column in CATEGORICAL_DEFAULTS:
+            continue
+
+        missing_count = int(get_missing_mask(batch_df[column]).sum())
+        if missing_count:
+            blocking_missing.append((column, missing_count))
+
+    if not blocking_missing:
+        return True
+
+    st.error("Validation failed. Some categorical columns have missing values that should not be auto-filled.")
+    st.write("Please complete these fields in the CSV file and upload it again:")
+    for column, missing_count in blocking_missing:
+        st.write(f"- `{column}`: {missing_count} missing value(s)")
+    return False
+
+
+def validate_categorical_values(batch_df: pd.DataFrame, required_columns: list[str]) -> bool:
+    errors = []
+
+    for column, valid_options in CATEGORICAL_OPTIONS.items():
+        if column not in required_columns or column not in batch_df.columns:
+            continue
+
+        actual_values = set(batch_df[column].dropna().astype(str).str.strip().unique())
+        actual_values.discard("")
+        invalid_values = sorted(actual_values - set(valid_options))
+
+        if invalid_values:
+            errors.append(f"`{column}` has invalid value(s): {invalid_values}. Allowed values: {valid_options}")
+
+    if not errors:
+        return True
+
+    st.error("Validation failed. Please fix invalid categorical values before prediction.")
+    for error in errors:
+        st.write(f"- {error}")
+    return False
+
+
+def prepare_batch_dataframe(uploaded_df: pd.DataFrame, required_columns: list[str]) -> tuple[pd.DataFrame, bool]:
+    render_extra_column_warning(uploaded_df.columns.tolist(), required_columns)
+
+    if not validate_required_columns(uploaded_df, required_columns):
+        return uploaded_df, False
+
+    render_numeric_missing_warning(uploaded_df, required_columns)
+    if not validate_numeric_values(uploaded_df, required_columns):
+        return uploaded_df, False
+
+    batch_df = coerce_input_types(uploaded_df)
+    batch_df = fill_allowed_categorical_missing_values(batch_df, required_columns)
+
+    if not validate_unfilled_categorical_missing_values(batch_df, required_columns):
+        return batch_df, False
+
+    if not validate_categorical_values(batch_df, required_columns):
+        return batch_df, False
 
     st.success("Validation passed. The file is ready for prediction.")
-    return True
+    return batch_df, True
+
+
+def render_result_preview(result_df: pd.DataFrame):
+    st.markdown("#### Result Preview")
+
+    preview_df = result_df.head(100)
+    if len(result_df) > 100:
+        st.caption("Showing first 100 rows only. Download CSV to view full results.")
+    else:
+        st.caption(f"Showing all {len(result_df)} prediction result row(s).")
+
+    st.dataframe(preview_df, use_container_width=True, hide_index=True)
 
 
 def render_result_summary(result_df: pd.DataFrame):
@@ -150,16 +270,62 @@ def render_result_summary(result_df: pd.DataFrame):
     with c4:
         st.metric("Lowest Score", f"{lowest_score:.2f}")
 
-    if "Predicted_Band" in result_df.columns:
-        st.markdown("#### Band Counts")
-        band_counts = (
-            result_df["Predicted_Band"]
-            .value_counts()
-            .rename_axis("Band")
-            .reset_index(name="Count")
-        )
-        st.dataframe(band_counts, use_container_width=True, hide_index=True)
-        st.bar_chart(band_counts.set_index("Band"))
+    render_score_distribution(result_df)
+
+
+def render_score_distribution(result_df: pd.DataFrame):
+    st.markdown("#### Predicted Score Range Distribution")
+
+    score_bins = [0, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+    score_labels = ["0-50","50-55","55-60","60-65","65-70","70-75","75-80","80-85","85-90","90-95", "95-100"]
+    chart_df = result_df[["Predicted_Score"]].copy()
+    chart_df["Score Range"] = pd.cut(
+        chart_df["Predicted_Score"],
+        bins=score_bins,
+        labels=score_labels,
+        include_lowest=True,
+        right=True,
+    )
+    range_counts = (
+        chart_df["Score Range"]
+        .value_counts(sort=False)
+        .reindex(score_labels, fill_value=0)
+        .rename_axis("Score Range")
+        .reset_index(name="Number of Students")
+    )
+
+    chart = px.bar(
+        range_counts,
+        x="Score Range",
+        y="Number of Students",
+        text="Number of Students",
+        labels={
+            "Score Range": "Score Range",
+            "Number of Students": "Number of Students",
+        },
+    )
+    chart.update_traces(
+        marker_color="#2563EB",
+        marker_line_color="white",
+        marker_line_width=1,
+        textposition="outside",
+        cliponaxis=False,
+    )
+    chart.update_layout(
+        height=380,
+        margin=dict(l=20, r=32, t=20, b=20),
+        xaxis_title="Score Range",
+        yaxis_title="Number of Students",
+        yaxis=dict(range=[0, max(1, range_counts["Number of Students"].max()) * 1.2]),
+        showlegend=False,
+        template="plotly_white",
+    )
+
+    st.plotly_chart(chart, use_container_width=True)
+    st.caption(
+        "This chart groups predicted scores into business-friendly ranges, making it easier to see "
+        "whether the uploaded batch is concentrated in lower, middle, or higher performance segments."
+    )
 
 
 # =========================================================
@@ -214,9 +380,7 @@ else:
     st.caption("Previewing the first 5 rows only. Full results are available after prediction.")
     st.dataframe(uploaded_df.head(5), use_container_width=True, hide_index=True)
 
-    batch_df = coerce_input_types(uploaded_df)
-    validation = validate_input_dataframe(batch_df, raw_feature_names)
-    is_valid = render_validation_report(validation)
+    batch_df, is_valid = prepare_batch_dataframe(uploaded_df, raw_feature_names)
 
     if is_valid:
         st.markdown("### Step 4: Predict and download result")
@@ -227,9 +391,7 @@ else:
 
             st.success("Batch prediction completed.")
             render_result_summary(result_df)
-
-            st.markdown("#### Result Preview")
-            st.dataframe(result_df.head(5), use_container_width=True, hide_index=True)
+            render_result_preview(result_df)
 
             st.download_button(
                 label="Download Prediction Results",
