@@ -4,7 +4,8 @@ Student Performance Predictor is a portfolio-oriented machine learning applicati
 
 The project is packaged as a multi-page Streamlit app with single-profile prediction, batch CSV prediction, input validation, saved model artifacts, and Ridge coefficient-based model interpretation.
 
-Current deployment status: **not deployed yet**.
+Current deployment status: **deployed**
+Live app: [Streamlit App](https://your-app-name.streamlit.app)
 
 ## Project Scope
 
