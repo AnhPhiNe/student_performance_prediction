@@ -1,39 +1,35 @@
 # Student Performance Predictor
 
-> Draft README for a portfolio machine learning project. This document describes the current state of the repository and will be refined as the project evolves.
+Student Performance Predictor is a portfolio-oriented machine learning application that estimates a student's exam score from academic, lifestyle, family, and school-context features.
 
-## 1. Project Overview
-
-Student Performance Predictor is an end-to-end machine learning application that predicts a student's exam score from academic, lifestyle, family, and school-related factors.
-
-The project is built as a multi-page Streamlit app with a saved machine learning pipeline, input validation, single-student prediction, batch prediction, and coefficient-based model interpretation.
+The project is packaged as a multi-page Streamlit app with single-profile prediction, batch CSV prediction, input validation, saved model artifacts, and Ridge coefficient-based model interpretation.
 
 Current deployment status: **not deployed yet**.
 
-## 2. Problem Statement
+## Project Scope
 
-The goal is to estimate a student's final exam score using structured input features such as study hours, attendance, previous scores, sleep hours, tutoring sessions, motivation level, parental involvement, school type, and other contextual factors.
-
-This is a **supervised regression problem** where the target variable is:
+This is a supervised regression project. The target variable is:
 
 ```text
 Exam_Score
 ```
 
-## 3. Tech Stack
+The app is intended for ML engineering demonstration and portfolio review, not for real educational decision-making.
+
+## Tech Stack
 
 - **Language:** Python
-- **App Framework:** Streamlit
-- **Data Processing:** pandas, NumPy
-- **Machine Learning:** scikit-learn, XGBoost
+- **App:** Streamlit
+- **Data:** pandas, NumPy
+- **Machine Learning:** scikit-learn
 - **Visualization:** Plotly, Matplotlib
-- **Model Serialization:** joblib
-- **Notebook Workflow:** Jupyter Notebook
-- **Testing:** pytest-compatible test structure
+- **Serialization:** joblib
+- **Testing:** pytest
+- **Notebook:** Jupyter Notebook
 
-Note: SHAP is listed as a dependency, but the current explainability page uses **Ridge coefficient-based interpretation**, not a complete SHAP workflow.
+XGBoost is used only as an optional training comparison in `scripts/train_model.py`; the deployed app uses a Ridge Regression pipeline.
 
-## 4. Current Folder Structure
+## Folder Structure
 
 ```text
 Student_Performance_Predictor/
@@ -43,18 +39,17 @@ Student_Performance_Predictor/
 |   +-- 2_Single_Prediction.py
 |   +-- 3_Batch_Prediction.py
 |   +-- 4_Explainability.py
-|   +-- 5_About.py
+|   +-- 5_Project_Details.py
 +-- src/
 |   +-- __init__.py
 |   +-- config.py
-|   +-- loader.py
+|   +-- feature_engineering.py
 |   +-- predictor.py
 |   +-- validators.py
-|   +-- feature_engineering.py
+|   +-- loader.py
 |   +-- explainer.py
 |   +-- helpers.py
 |   +-- ui_components.py
-|   +-- utils.py
 +-- data/
 |   +-- Student_Performance.csv
 +-- models/
@@ -63,66 +58,74 @@ Student_Performance_Predictor/
 |   +-- raw_feature_names.joblib
 |   +-- raw_survivors.joblib
 |   +-- best_hyperparameters.json
+|   +-- model_metadata.json
 +-- notebooks/
-|   +-- 01_eda_model_training.ipynb
-+-- artifacts/
-|   +-- figures/
-|   +-- model_comparison.csv
+|   +-- model_exploration.ipynb
++-- scripts/
+|   +-- train_model.py
 +-- assets/
 |   +-- css/
-|   +-- icons/
-|   +-- images/
+|       +-- styles.css
 +-- tests/
-|   +-- test_pipeline_warning.py
+|   +-- test_model_pipeline.py
 +-- requirements.txt
 +-- README.md
++-- LICENSE
 +-- .gitignore
 ```
 
-## 5. Current Features
+## App Features
 
-- Multi-page Streamlit application.
-- Home page with dataset preview and score distribution.
-- Single student prediction using an interactive form.
-- Preset student profiles for quick testing.
+- Multi-page Streamlit user interface.
+- Single student prediction from an interactive profile form.
+- Preset profiles for quick testing.
 - Batch prediction from uploaded CSV files.
-- Downloadable CSV template for batch inference.
-- Input schema and value validation before prediction.
-- Prediction result bands such as `Excellent`, `Very Good`, `Good`, `Average`, and `Needs Improvement`.
-- Basic rule-based recommendations based on input values.
-- Ridge Regression coefficient-based model interpretation.
-- Modular code structure under `src/`.
+- Downloadable CSV input template.
+- Input schema and value validation.
+- Prediction bands: `Excellent`, `Very Good`, `Good`, `Average`, and `Needs Improvement`.
+- Rule-based recommendations for the current prediction.
+- Ridge coefficient-based model insight page.
+- Project Details page for dataset, pipeline, artifacts, limitations, and roadmap.
 
-## 6. Model Pipeline
+## Model Pipeline
 
-The current inference flow is:
+The inference flow is:
 
 ```text
-Raw User Input
-    -> Input Validation
-    -> Feature Engineering
-    -> Selected Feature Filtering
+Raw input
+    -> Validation
+    -> Feature engineering
+    -> Selected feature filtering
     -> Preprocessing
-    -> Ridge Regression Prediction
-    -> Score Clipping to 0-100
-    -> Result Band + Recommendations
+    -> Ridge Regression
+    -> Clipped score
+    -> Score band and recommendations
 ```
 
 Main model artifacts:
 
-- `hcmue_student_full_pipeline_v1_0.joblib`: full prediction pipeline.
-- `ridge_core_model.joblib`: Ridge model used for coefficient-based interpretation.
-- `raw_feature_names.joblib`: required raw input schema.
-- `raw_survivors.joblib`: selected raw features retained by the pipeline.
-- `best_hyperparameters.json`: saved best model metadata/hyperparameters snapshot.
+- `hcmue_student_full_pipeline_v1_0.joblib`: deployable raw-input prediction pipeline.
+- `ridge_core_model.joblib`: Ridge model used by the explainability page.
+- `raw_feature_names.joblib`: expected raw input schema.
+- `raw_survivors.joblib`: selected raw features retained after feature screening.
+- `best_hyperparameters.json`: final model hyperparameter snapshot.
+- `model_metadata.json`: training environment, metrics, residual summary, and model comparison.
 
-## 7. How to Run Locally
+## Training Workflow
 
-Clone the repository and move into the project folder:
+The production-oriented training workflow lives in:
 
 ```bash
-cd Student_Performance_Predictor
+scripts/train_model.py
 ```
+
+The script performs data loading, cleaning, train/test split, feature engineering, train-only feature screening, model comparison, final Ridge pipeline fitting, artifact export, metadata export, and an exported-pipeline smoke check.
+
+Existing artifacts are not overwritten silently. Move or remove the current files in `models/` before intentionally exporting a fresh model run.
+
+The notebook in `notebooks/model_exploration.ipynb` is kept for EDA and modeling reference.
+
+## Run Locally
 
 Create and activate a virtual environment:
 
@@ -154,26 +157,23 @@ Run tests:
 python -m pytest tests
 ```
 
-## 8. Screenshots Placeholder
+## Current Model Snapshot
 
-Screenshots will be added after UI review.
+The current saved model is Ridge Regression. The active hyperparameters and evaluation metadata are stored under `models/`.
 
-Planned screenshot slots:
+This project reports model metrics as portfolio evidence, not as a locked production benchmark.
 
-- Home page
-- Single prediction page
-- Batch prediction page
-- Explainability page
-- About page
+## Limitations
 
-## 9. Planned Improvements
+- Predictions are correlational and should not be treated as causal explanations.
+- The dataset may not generalize to every school system or student population.
+- The app is designed for demonstration, not high-stakes academic decisions.
+- Local explanations such as SHAP are not part of the current deployed app.
 
-- Add a more complete test suite for validators and prediction utilities.
-- Improve README with actual screenshots.
-- Add deployment instructions after the app is deployed.
-- Add model training and evaluation scripts outside the notebook.
-- Add clearer model/version metadata for saved artifacts.
-- Add Docker support.
-- Add Streamlit secrets/config documentation if needed.
-- Explore SHAP-based explainability as a future enhancement.
+## Roadmap
 
+- Add final screenshots after deployment.
+- Add deployment instructions and public app URL.
+- Add a small FastAPI layer only if API demonstration becomes a project goal.
+- Expand tests for validators, schema alignment, and batch prediction preparation.
+- Add model/data source notes before public release.

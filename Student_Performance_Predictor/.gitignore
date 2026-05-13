@@ -14,6 +14,8 @@ __pycache__/
 .coverage
 htmlcov/
 
+artifacts/
+
 .streamlit/secrets.toml
 
 .env
