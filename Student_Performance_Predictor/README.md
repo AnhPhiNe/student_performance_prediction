@@ -2,10 +2,10 @@
 
 Student Performance Predictor is a portfolio-oriented machine learning application that estimates a student's exam score from academic, lifestyle, family, and school-context features.
 
-The project is packaged as a multi-page Streamlit app with single-profile prediction, batch CSV prediction, input validation, saved model artifacts, and Ridge coefficient-based model interpretation.
+The project is packaged as a multi-page Streamlit app with single-profile prediction, batch CSV prediction, input validation, saved model artifacts, Ridge coefficient-based model interpretation, and a lightweight FastAPI inference backend.
 
 Current deployment status: **deployed**
-Live app: [Streamlit App](https://your-app-name.streamlit.app)
+Live app: [Streamlit App](https://student-performance-predictor-ap.streamlit.app)
 
 ## Project Scope
 
@@ -21,6 +21,7 @@ The app is intended for ML engineering demonstration and portfolio review, not f
 
 - **Language:** Python
 - **App:** Streamlit
+- **API:** FastAPI, Uvicorn
 - **Data:** pandas, NumPy
 - **Machine Learning:** scikit-learn
 - **Visualization:** Plotly, Matplotlib
@@ -35,6 +36,10 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 ```text
 Student_Performance_Predictor/
 +-- app.py
++-- api/
+|   +-- __init__.py
+|   +-- main.py
+|   +-- schemas.py
 +-- pages/
 |   +-- 1_Home.py
 |   +-- 2_Single_Prediction.py
@@ -43,8 +48,10 @@ Student_Performance_Predictor/
 |   +-- 5_Project_Details.py
 +-- src/
 |   +-- __init__.py
+|   +-- artifact_loader.py
 |   +-- config.py
 |   +-- feature_engineering.py
+|   +-- prediction_service.py
 |   +-- predictor.py
 |   +-- validators.py
 |   +-- loader.py
@@ -68,6 +75,7 @@ Student_Performance_Predictor/
 |   +-- css/
 |       +-- styles.css
 +-- tests/
+|   +-- test_api.py
 |   +-- test_model_pipeline.py
 +-- requirements.txt
 +-- README.md
@@ -87,6 +95,7 @@ Student_Performance_Predictor/
 - Rule-based recommendations for the current prediction.
 - Ridge coefficient-based model insight page.
 - Project Details page for dataset, pipeline, artifacts, limitations, and roadmap.
+- FastAPI endpoints for health checks, metadata, single prediction, and batch prediction.
 
 ## Model Pipeline
 
@@ -152,11 +161,40 @@ Run the Streamlit app:
 streamlit run app.py
 ```
 
+Run the FastAPI backend:
+
+```bash
+uvicorn api.main:app --reload
+```
+
+Open the interactive API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
 Run tests:
 
 ```bash
 python -m pytest tests
 ```
+
+## FastAPI Backend
+
+The API is a stateless inference service that reuses the same saved sklearn pipeline as the Streamlit app.
+
+Available endpoints:
+
+```text
+GET  /health
+GET  /metadata
+POST /predict
+POST /batch-predict
+```
+
+`POST /predict` accepts one student profile and returns a predicted score, score band, recommendations, and validation warnings.
+
+`POST /batch-predict` accepts a JSON payload with multiple records and returns row-level predictions plus a batch average.
 
 ## Current Model Snapshot
 
@@ -175,6 +213,5 @@ This project reports model metrics as portfolio evidence, not as a locked produc
 
 - Add final screenshots after deployment.
 - Add deployment instructions and public app URL.
-- Add a small FastAPI layer only if API demonstration becomes a project goal.
 - Expand tests for validators, schema alignment, and batch prediction preparation.
 - Add model/data source notes before public release.
