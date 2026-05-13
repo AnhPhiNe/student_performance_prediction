@@ -14,7 +14,7 @@ def render_hero_section(title: str, subtitle: str, badge_text: str | None = None
             <p class="ep-hero-subtitle">{subtitle}</p>
         </section>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -35,7 +35,7 @@ def render_kpi_cards(kpis: list[tuple[str, str]]):
                     <div class="ep-kpi-value">{value}</div>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
 
@@ -51,8 +51,25 @@ def render_feature_cards(cards: list[tuple[str, str, str]]):
                     <div class="ep-feature-desc">{desc}</div>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
+
+
+def render_workflow_strip(steps: list[str]):
+    step_html = []
+    for index, step in enumerate(steps):
+        step_html.append(f"<span class='ep-flow-step'>{step}</span>")
+        if index < len(steps) - 1:
+            step_html.append("<span class='ep-flow-arrow'>/</span>")
+
+    st.markdown(
+        f"""
+        <div class="ep-flow-row">
+            {''.join(step_html)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_result_card(score_text: str, band: str, band_color: str):
@@ -66,7 +83,7 @@ def render_result_card(score_text: str, band: str, band_color: str):
             </div>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -75,7 +92,7 @@ def render_empty_state(message: str):
         f"""
         <div class="ep-empty-state">{message}</div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -86,38 +103,81 @@ def render_next_step_cards():
         st.markdown(
             """
             <div class="ep-next-card">
-                <div class="ep-next-title">🎯 Single Prediction</div>
+                <div class="ep-next-title">Single Prediction</div>
                 <div class="ep-next-desc">Build one profile and estimate the expected exam score instantly.</div>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     with col2:
         st.markdown(
             """
             <div class="ep-next-card">
-                <div class="ep-next-title">📂 Batch Prediction</div>
+                <div class="ep-next-title">Batch Prediction</div>
                 <div class="ep-next-desc">Upload a CSV file, validate the schema, and score multiple students at once.</div>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 
-def render_sidebar_summary(raw_feature_names: list[str]):
+def render_root_welcome():
+    st.caption("ML Portfolio Project")
+    st.title("EduPredict")
+    st.subheader("Student Performance Predictor")
+    st.write(
+        "A compact Streamlit app for estimating student exam performance from academic, "
+        "lifestyle, family, and school-related factors."
+    )
+
+    st.info(
+        "Use the sidebar navigation to open Home, Single Prediction, Batch Prediction, "
+        "Explainability, or About. Start with Home for context, or Single Prediction "
+        "to try the model immediately."
+    )
+
+
+def render_sidebar_summary(raw_feature_names: list[str] | None = None):
+    feature_count = len(raw_feature_names) if raw_feature_names is not None else None
+    feature_line = (
+        f"<div><strong>Input Features</strong><br>{feature_count}</div>"
+        if feature_count is not None
+        else "<div><strong>Input Schema</strong><br>Loaded on prediction pages</div>"
+    )
+
     with st.sidebar:
-        st.markdown("## 🎓 EduPredict")
-        st.caption("Portfolio ML App")
+        st.markdown(
+            """
+            <div class="ep-sidebar-brand">
+                <div class="ep-sidebar-logo">EP</div>
+                <div>
+                    <div class="ep-sidebar-title">EduPredict</div>
+                    <div class="ep-sidebar-subtitle">Student Performance Predictor</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         st.markdown("---")
         st.markdown(
             f"""
             <div class="ep-sidebar-mini">
                 <div><strong>Model</strong><br>Ridge Regression</div>
-                <div><strong>Features</strong><br>{len(raw_feature_names)}</div>
+                {feature_line}
                 <div><strong>Output</strong><br>Exam Score</div>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("---")
+        st.markdown(
+            """
+            <div class="ep-sidebar-nav-note">
+                Navigation: Home, Single Prediction, Batch Prediction, Explainability, About.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
