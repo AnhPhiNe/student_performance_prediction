@@ -46,6 +46,29 @@ except Exception as e:
 # =========================================================
 # 2) SMALL UI HELPERS
 # =========================================================
+FEATURE_HELP_TEXT = {
+    "Hours_Studied": "Estimated study time per week. Use the student's usual weekly study habit, not a one-day value.",
+    "Attendance": "Class attendance percentage from 0 to 100. Higher attendance usually means more consistent class participation.",
+    "Previous_Scores": "The student's previous exam or assessment score on a 0 to 100 scale.",
+    "Tutoring_Sessions": "Number of tutoring or extra support sessions attended per month.",
+    "Sleep_Hours": "Average sleep duration per night. Use a typical school-week average.",
+    "Physical_Activity": "Estimated hours of physical activity per week.",
+    "Parental_Involvement": "How actively parents or guardians support the student's learning.",
+    "Access_to_Resources": "Availability of learning materials such as books, study space, devices, or academic support.",
+    "Extracurricular_Activities": "Whether the student participates in clubs, sports, arts, or other organized activities outside regular classes.",
+    "Motivation_Level": "The student's general motivation and consistency toward studying.",
+    "Internet_Access": "Whether the student has reliable internet access for learning resources.",
+    "Family_Income": "Approximate family income group from the dataset categories.",
+    "Teacher_Quality": "General quality of teaching support perceived or recorded for the student.",
+    "School_Type": "Whether the student attends a public or private school.",
+    "Peer_Influence": "Overall influence from classmates or friends on the student's learning habits.",
+    "Learning_Disabilities": "Whether the student has a recorded learning disability or learning support need.",
+    "Parental_Education_Level": "Highest education level of the student's parent or guardian.",
+    "Distance_from_Home": "How far the student lives from school based on the dataset categories.",
+    "Gender": "Student gender category as represented in the training dataset.",
+}
+
+
 def get_band_color(score: float) -> str:
     if score >= 90:
         return "#16a34a"
@@ -150,6 +173,7 @@ def build_display_recommendations(input_df, recommendations: list[str], score: f
 
 def render_input_widget(feature: str):
     label = get_friendly_label(feature)
+    help_text = FEATURE_HELP_TEXT.get(feature)
     current_value = st.session_state.form_data.get(feature, DEFAULT_VALUES.get(feature))
 
     if feature in NUMERIC_RANGES:
@@ -162,6 +186,7 @@ def render_input_widget(feature: str):
                 min_value=min_val,
                 max_value=max_val,
                 value=value,
+                help=help_text,
             )
         else:
             st.session_state.form_data[feature] = st.number_input(
@@ -170,6 +195,7 @@ def render_input_widget(feature: str):
                 max_value=max_val,
                 value=value,
                 step=1,
+                help=help_text,
             )
 
     elif feature in CATEGORICAL_OPTIONS:
@@ -180,6 +206,7 @@ def render_input_widget(feature: str):
             label,
             options=options,
             index=options.index(value),
+            help=help_text,
         )
 
 
