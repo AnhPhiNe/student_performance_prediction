@@ -77,8 +77,8 @@ def predict_batch(model_pipeline, batch_df: pd.DataFrame, raw_feature_names: lis
     predictions = np.clip(predictions, 0, 100)
 
     result_df = batch_df.copy()
-    result_df["Predicted_Score"] = np.round(predictions, 2)
-    result_df["Predicted_Band"] = result_df["Predicted_Score"].apply(score_band)
+    result_df.loc[:, "Predicted_Score"] = np.round(predictions, 2)
+    result_df.loc[:, "Predicted_Band"] = result_df["Predicted_Score"].apply(score_band)
 
     return result_df
 
