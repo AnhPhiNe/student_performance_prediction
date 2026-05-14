@@ -28,7 +28,7 @@ This is a supervised regression project. The target variable is:
 Exam_Score
 ```
 
-The app is intended for ML engineering demonstration and portfolio review, not for real educational decision-making.
+The app is intended for machine learning engineering demonstration and portfolio review, not for real educational decision-making.
 
 ## Tech Stack
 
@@ -107,7 +107,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 - Prediction bands: `Excellent`, `Very Good`, `Good`, `Average`, and `Needs Improvement`.
 - Rule-based recommendations for the current prediction.
 - Ridge coefficient-based model insight page.
-- Project Details page for dataset, pipeline, artifacts, limitations, and roadmap.
+- Project Details page for dataset, pipeline, artifacts, limitations, and future improvements.
 - FastAPI endpoints for service info, health checks, metadata, single prediction, and batch prediction.
 - Optional API-backed Streamlit inference through `API_BASE_URL`, with local inference fallback.
 
@@ -243,8 +243,9 @@ This project reports model metrics as portfolio evidence, not as a locked produc
 - The app is designed for demonstration, not high-stakes academic decisions.
 - Local explanations such as SHAP are not part of the current deployed app.
 
-## Roadmap
+## Future Improvements
 
-- Add final screenshots after deployment.
-- Expand tests for validators, schema alignment, and batch prediction preparation.
-- Add model/data source notes before public release.
+- Add final screenshots to the repository README.
+- Expand unit tests for validators and schema alignment.
+- Add more detailed model and data source notes.
+- Move the API to a paid instance if low-latency cold starts become important.

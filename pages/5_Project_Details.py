@@ -386,7 +386,13 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-render_badges(["Ridge Regression", "6.6k Rows", "19 Features", "sklearn Pipeline", "FastAPI-ready"])
+render_badges([
+    "Ridge Regression",
+    "6.6K Records",
+    "19 Input Features",
+    "Preprocessing Pipeline",
+    "FastAPI Backend",
+])
 
 
 # =========================================================
@@ -404,7 +410,7 @@ with goal_col:
             ("Objective", "Predict student exam performance"),
             ("Data", "Structured tabular inputs"),
             ("Inference", "Single profile and batch CSV scoring"),
-            ("Product Lens", "Inspectable ML workflow"),
+            ("Product Lens", "Inspectable machine learning workflow"),
         ]
     )
     st.markdown(
@@ -563,8 +569,8 @@ render_doc_table(
 st.markdown(
     """
     <div class="ep-doc-footer">
-        GitHub Repository: <a href="https://github.com/AnhPhiNe/student_performance_prediction" target="_blank">student_performance_prediction</a><br>
-        <strong>Author:</strong> Nguyen Anh Phi.
+        GitHub Repository: <a href="https://github.com/AnhPhiNe/student_performance_prediction" target="_blank" rel="noopener noreferrer">student_performance_prediction</a><br>
+        <strong>Author:</strong> Nguyen Anh Phi
     </div>
     """,
     unsafe_allow_html=True,
