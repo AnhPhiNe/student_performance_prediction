@@ -569,7 +569,7 @@ render_doc_table(
 st.markdown(
     """
     <div class="ep-doc-footer">
-        GitHub Repository: <a href="https://github.com/AnhPhiNe/student_performance_prediction" target="_blank" rel="noopener noreferrer">student_performance_prediction</a><br>
+        <strong>GitHub Repository:</strong> <a href="https://github.com/AnhPhiNe/student_performance_prediction" target="_blank" rel="noopener noreferrer">student_performance_prediction</a><br>
         <strong>Author:</strong> Nguyen Anh Phi
     </div>
     """,
