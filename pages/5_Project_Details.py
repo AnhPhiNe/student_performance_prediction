@@ -561,9 +561,8 @@ render_doc_table(
 st.markdown(
     """
     <div class="ep-doc-footer">
-        <strong>Project Links</strong><br>
-        Repository link will be added after public release.<br>
-        <strong>Author:</strong> EduPredict project owner.
+        GitHub Repository: <a href="https://github.com/AnhPhiNe/student_performance_prediction" target="_blank">student_performance_prediction</a><br>
+        <strong>Author:</strong> Nguyen Anh Phi.
     </div>
     """,
     unsafe_allow_html=True,
