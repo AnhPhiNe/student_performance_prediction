@@ -8,6 +8,16 @@ from src.config import SAMPLE_PROFILES
 client = TestClient(app)
 
 
+def test_root_endpoint():
+    response = client.get("/")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["service"] == "Student Performance Predictor API"
+    assert payload["status"] == "ok"
+    assert payload["docs"] == "/docs"
+
+
 def test_health_endpoint():
     response = client.get("/health")
 

@@ -18,6 +18,7 @@ This keeps the deployed Streamlit app simple while allowing the same project to 
 
 Current deployment status: **deployed**
 Live app: [Streamlit App](https://student-performance-predictor-ap.streamlit.app)
+Live API: [FastAPI Backend](https://student-performance-prediction-8xv5.onrender.com)
 
 ## Project Scope
 
@@ -61,6 +62,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 |   +-- __init__.py
 |   +-- artifact_loader.py
 |   +-- config.py
+|   +-- inference_client.py
 |   +-- prediction_service.py
 |   +-- predictor.py
 |   +-- validators.py
@@ -86,6 +88,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 |       +-- styles.css
 +-- tests/
 |   +-- test_api.py
+|   +-- test_inference_client.py
 |   +-- test_model_pipeline.py
 +-- requirements.txt
 +-- README.md
@@ -105,7 +108,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 - Rule-based recommendations for the current prediction.
 - Ridge coefficient-based model insight page.
 - Project Details page for dataset, pipeline, artifacts, limitations, and roadmap.
-- FastAPI endpoints for health checks, metadata, single prediction, and batch prediction.
+- FastAPI endpoints for service info, health checks, metadata, single prediction, and batch prediction.
 - Optional API-backed Streamlit inference through `API_BASE_URL`, with local inference fallback.
 
 ## Model Pipeline
@@ -205,12 +208,15 @@ The API is a stateless inference service that reuses the same saved sklearn pipe
 Available endpoints:
 
 ```text
+GET  /
 GET  /health
 GET  /metadata
 POST /predict
 POST /batch-predict
 POST /batch-predict-csv
 ```
+
+`GET /` returns a compact service status and docs pointer for browser checks.
 
 `POST /predict` accepts one student profile and returns a predicted score, score band, recommendations, and validation warnings.
 
@@ -240,6 +246,5 @@ This project reports model metrics as portfolio evidence, not as a locked produc
 ## Roadmap
 
 - Add final screenshots after deployment.
-- Add deployment instructions and public app URL.
 - Expand tests for validators, schema alignment, and batch prediction preparation.
 - Add model/data source notes before public release.
