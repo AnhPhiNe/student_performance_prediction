@@ -4,6 +4,18 @@ Student Performance Predictor is a portfolio-oriented machine learning applicati
 
 The project is packaged as a multi-page Streamlit app with single-profile prediction, batch CSV prediction, input validation, saved model artifacts, Ridge coefficient-based model interpretation, and a lightweight FastAPI inference backend.
 
+The Streamlit app supports two inference modes:
+
+```text
+Default mode:
+Streamlit -> local prediction service -> sklearn pipeline
+
+API-backed mode:
+Streamlit -> FastAPI -> prediction service -> sklearn pipeline
+```
+
+This keeps the deployed Streamlit app simple while allowing the same project to demonstrate a real HTTP inference boundary when `API_BASE_URL` is configured.
+
 Current deployment status: **deployed**
 Live app: [Streamlit App](https://student-performance-predictor-ap.streamlit.app)
 
@@ -94,6 +106,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 - Ridge coefficient-based model insight page.
 - Project Details page for dataset, pipeline, artifacts, limitations, and roadmap.
 - FastAPI endpoints for health checks, metadata, single prediction, and batch prediction.
+- Optional API-backed Streamlit inference through `API_BASE_URL`, with local inference fallback.
 
 ## Model Pipeline
 
@@ -170,6 +183,15 @@ Open the interactive API docs:
 http://127.0.0.1:8000/docs
 ```
 
+Use Streamlit with the FastAPI backend:
+
+```powershell
+$env:API_BASE_URL="http://127.0.0.1:8000"
+streamlit run app.py
+```
+
+If `API_BASE_URL` is not set, Streamlit uses the local prediction service directly. If the API is configured but unavailable, the app falls back to local inference and shows a warning.
+
 Run tests:
 
 ```bash
@@ -178,7 +200,7 @@ python -m pytest tests
 
 ## FastAPI Backend
 
-The API is a stateless inference service that reuses the same saved sklearn pipeline as the Streamlit app.
+The API is a stateless inference service that reuses the same saved sklearn pipeline and prediction service as the Streamlit app.
 
 Available endpoints:
 
@@ -199,6 +221,8 @@ POST /batch-predict-csv
 For CSV batch prediction, selected categorical fields with missing values are filled with neutral defaults, while missing numeric values are left for the model pipeline's median imputer.
 
 CSV uploads must use the `.csv` extension, contain at least one data row, and include at least one expected input column before schema validation runs.
+
+The Streamlit UI can use this backend in API-backed mode, but the API is intentionally optional so the portfolio demo remains easy to deploy as a single Streamlit app.
 
 ## Current Model Snapshot
 

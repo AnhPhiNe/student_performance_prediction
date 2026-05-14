@@ -14,7 +14,12 @@ from sklearn import set_config
 from src.config import CATEGORICAL_OPTIONS, NUMERIC_RANGES
 from src.loader import load_css, load_model_assets
 from src.helpers import build_default_input
-from src.predictor import coerce_input_types, predict_batch
+from src.inference_client import (
+    get_inference_mode_label,
+    predict_student_dataframe_via_client,
+)
+from src.prediction_service import PredictionInputError
+from src.predictor import coerce_input_types
 from src.ui_components import render_page_header, render_empty_state
 
 
@@ -254,6 +259,24 @@ def render_result_preview(result_df: pd.DataFrame):
     st.dataframe(preview_df, use_container_width=True, hide_index=True)
 
 
+def build_result_dataframe_from_predictions(batch_df: pd.DataFrame, predictions: list[dict]) -> pd.DataFrame:
+    if len(predictions) != len(batch_df):
+        raise ValueError(
+            f"Prediction count mismatch: expected {len(batch_df)} row(s), got {len(predictions)}."
+        )
+
+    result_df = batch_df.copy().reset_index(drop=True)
+    result_df["Predicted_Score"] = [
+        round(float(prediction["predicted_score"]), 2)
+        for prediction in predictions
+    ]
+    result_df["Predicted_Band"] = [
+        str(prediction["predicted_band"])
+        for prediction in predictions
+    ]
+    return result_df
+
+
 def render_result_summary(result_df: pd.DataFrame):
     total_records = len(result_df)
     average_score = result_df["Predicted_Score"].mean()
@@ -335,6 +358,7 @@ render_page_header(
     "Batch Prediction",
     "Upload a CSV file, validate the schema, score many student records, and download the result."
 )
+st.caption(f"Inference backend: {get_inference_mode_label()}")
 
 
 # =========================================================
@@ -386,16 +410,37 @@ else:
         st.markdown("### Step 4: Predict and download result")
 
         if st.button("Run Batch Prediction", type="primary", use_container_width=True):
-            with st.spinner("Scoring student records..."):
-                result_df = predict_batch(full_pipeline, batch_df, raw_feature_names)
+            try:
+                with st.spinner("Scoring student records..."):
+                    prediction_result = predict_student_dataframe_via_client(
+                        batch_df.loc[:, raw_feature_names],
+                        filename=getattr(uploaded_file, "name", "students.csv"),
+                    )
+                    result_df = build_result_dataframe_from_predictions(
+                        batch_df,
+                        prediction_result.predictions,
+                    )
 
-            st.success("Batch prediction completed.")
-            render_result_summary(result_df)
-            render_result_preview(result_df)
+                for warning in prediction_result.warnings:
+                    st.warning(warning)
 
-            st.download_button(
-                label="Download Prediction Results",
-                data=dataframe_to_csv_bytes(result_df),
-                file_name="student_prediction_results.csv",
-                mime="text/csv",
-            )
+                st.success("Batch prediction completed.")
+                st.caption(f"Inference mode: {prediction_result.inference_mode}")
+                render_result_summary(result_df)
+                render_result_preview(result_df)
+
+                st.download_button(
+                    label="Download Prediction Results",
+                    data=dataframe_to_csv_bytes(result_df),
+                    file_name="student_prediction_results.csv",
+                    mime="text/csv",
+                )
+            except PredictionInputError as e:
+                if e.warnings:
+                    for warning in e.warnings:
+                        st.warning(warning)
+                st.error("Prediction failed because the batch data is not valid.")
+                for error in e.errors:
+                    st.write(f"- {error}")
+            except Exception as e:
+                st.error(f"Batch prediction could not be completed: {e}")

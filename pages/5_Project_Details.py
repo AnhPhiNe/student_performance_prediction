@@ -386,7 +386,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-render_badges(["Ridge Regression", "6.6k Rows", "19 Features", "sklearn Pipeline"])
+render_badges(["Ridge Regression", "6.6k Rows", "19 Features", "sklearn Pipeline", "FastAPI-ready"])
 
 
 # =========================================================
@@ -486,7 +486,8 @@ render_section_title("Pipeline & Artifacts", "Compact view of inference flow and
 
 render_pipeline_flow(
     [
-        "Raw Input",
+        "Streamlit or API Input",
+        "Inference Adapter",
         "Validation",
         "Preprocessing",
         "Feature Selection",
@@ -502,6 +503,7 @@ render_checklist(
         "Ordinal/categorical encoding",
         "Train-only feature selection",
         "Raw-input inference pipeline",
+        "Optional FastAPI-backed inference mode",
         "Schema-aligned batch validation",
     ]
 )
@@ -554,7 +556,7 @@ render_doc_table(
         ["Model lifecycle", "Model versioning"],
         ["Operations", "Lightweight monitoring"],
         ["Explainability", "Local explanation support"],
-        ["Deployment", "API deployment"],
+        ["Deployment", "Optional public API hosting"],
     ],
 )
 

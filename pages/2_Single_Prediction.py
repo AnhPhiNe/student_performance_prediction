@@ -18,14 +18,12 @@ from src.config import (
 )
 from src.loader import load_css, load_model_assets
 from src.helpers import get_friendly_label, format_score
+from src.inference_client import get_inference_mode_label, predict_student_profile_via_client
+from src.prediction_service import PredictionInputError
 from src.predictor import (
     build_input_dataframe,
     coerce_input_types,
-    predict_single,
-    score_band,
-    generate_recommendations,
 )
-from src.validators import validate_input_dataframe
 from src.ui_components import render_page_header
 
 
@@ -191,34 +189,25 @@ def render_prediction_result():
         input_df = build_input_dataframe(user_input, raw_feature_names)
         input_df = coerce_input_types(input_df)
 
-        validation = validate_input_dataframe(input_df, raw_feature_names)
+        with st.spinner("Running prediction..."):
+            result = predict_student_profile_via_client(input_df.iloc[0].to_dict())
 
-        if validation["warnings"]:
-            for warning in validation["warnings"]:
+        if result.warnings:
+            for warning in result.warnings:
                 st.warning(warning)
 
-        if not validation["is_valid"]:
-            st.error("The input data is not valid. Please review the items below.")
-            for error in validation["errors"]:
-                st.write(f"- {error}")
-            return
-
-        with st.spinner("Running prediction..."):
-            predicted_score = predict_single(full_pipeline, input_df, raw_feature_names)
-
-        band = score_band(predicted_score)
-        recommendations = generate_recommendations(input_df)
         display_recommendations = build_display_recommendations(
             input_df,
-            recommendations,
-            predicted_score,
+            result.recommendations,
+            result.predicted_score,
         )
 
         st.markdown(
             "<div class='ep-prediction-status'>Prediction completed</div>",
             unsafe_allow_html=True,
         )
-        render_compact_score(predicted_score, band)
+        st.caption(f"Inference mode: {result.inference_mode}")
+        render_compact_score(result.predicted_score, result.predicted_band)
 
         if display_recommendations:
             st.markdown(
@@ -230,6 +219,13 @@ def render_prediction_result():
                 unsafe_allow_html=True,
             )
 
+    except PredictionInputError as e:
+        if e.warnings:
+            for warning in e.warnings:
+                st.warning(warning)
+        st.error("The input data is not valid. Please review the items below.")
+        for error in e.errors:
+            st.write(f"- {error}")
     except Exception as e:
         st.error(f"Prediction could not be completed: {e}")
 
@@ -251,6 +247,7 @@ render_page_header(
     "Single Student Prediction",
     "Adjust a student profile and run an end-to-end model prediction."
 )
+st.caption(f"Inference backend: {get_inference_mode_label()}")
 
 
 # =========================================================
