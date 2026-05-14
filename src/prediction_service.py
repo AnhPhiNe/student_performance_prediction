@@ -110,7 +110,7 @@ def _prepare_batch_dataframe(records: list[dict[str, Any]], raw_feature_names: l
                 f"Column '{column}' has {missing_count} missing value(s); the model pipeline will use median imputation."
             )
 
-        batch_df[column] = numeric_values
+        batch_df.loc[:, column] = numeric_values
 
     for column, default_value in CATEGORICAL_DEFAULTS.items():
         if column not in raw_feature_names or column not in batch_df.columns:
@@ -142,7 +142,7 @@ def _prepare_batch_dataframe(records: list[dict[str, Any]], raw_feature_names: l
                 f"Column '{column}' has invalid values: {invalid_values}. Allowed values: {valid_options}"
             )
 
-        batch_df[column] = batch_df[column].astype("string")
+        batch_df.loc[:, column] = batch_df[column].astype("string")
 
     if errors:
         raise PredictionInputError(errors=errors, warnings=warnings)
