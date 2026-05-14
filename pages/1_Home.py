@@ -46,7 +46,7 @@ def get_model_label() -> str:
 render_page_header(
     title="EduPredict",
     subtitle="Predict student exam performance from structured academic, lifestyle, family, and school context data.",
-    badge_text="Student Performance ML App",
+    badge_text="Student Performance Machine Learning App",
 )
 
 st.info(

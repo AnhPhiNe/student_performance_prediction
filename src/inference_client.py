@@ -46,7 +46,7 @@ def get_api_base_url() -> str | None:
 def get_inference_mode_label() -> str:
     if get_api_base_url():
         return "FastAPI backend enabled"
-    return "Local ML service"
+    return "Local machine learning service"
 
 
 def _api_detail_to_error(detail: Any) -> PredictionInputError:
