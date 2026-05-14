@@ -14,7 +14,7 @@ from src.prediction_service import (
 
 
 DEFAULT_TIMEOUT_SECONDS = 10.0
-API_BASE_URL_ENV_VARS = ("API_BASE_URL", "STUDENT_PREDICTOR_API_URL")
+API_BASE_URL_ENV_VAR = "API_BASE_URL"
 
 
 @dataclass(frozen=True)
@@ -36,10 +36,9 @@ class BatchPredictionResult:
 
 
 def get_api_base_url() -> str | None:
-    for env_var in API_BASE_URL_ENV_VARS:
-        value = os.getenv(env_var)
-        if value and value.strip():
-            return value.strip().rstrip("/")
+    value = os.getenv(API_BASE_URL_ENV_VAR)
+    if value and value.strip():
+        return value.strip().rstrip("/")
     return None
 
 

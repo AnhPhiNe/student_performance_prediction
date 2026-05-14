@@ -608,6 +608,11 @@ def build_metadata(
     raw_survivors: list[str],
     best_hyperparameters: dict[str, Any],
 ) -> dict[str, Any]:
+    try:
+        dataset_path = str(data_path.resolve().relative_to(PROJECT_ROOT)).replace("\\", "/")
+    except ValueError:
+        dataset_path = str(data_path.resolve())
+
     metadata = {
         "training_date": datetime.now(timezone.utc).isoformat(),
         "python_version": platform.python_version(),
@@ -621,7 +626,7 @@ def build_metadata(
         "selected_raw_survivor_features": raw_survivors,
         "final_model_name": "Ridge Regression",
         "best_hyperparameters": best_hyperparameters,
-        "dataset_path": str(data_path.resolve()),
+        "dataset_path": dataset_path,
         "limitation_note": (
             "This is a portfolio-oriented tabular regression model. Feature selection uses "
             "train-only statistical screening, and final holdout metrics should be treated as "
@@ -682,7 +687,7 @@ def export_artifacts(
     joblib.dump(raw_survivors, paths["raw_survivors"])
 
     with paths["best_hyperparameters"].open("w", encoding="utf-8") as f:
-        json.dump({"model_name": "Ridge", **ridge_params}, f, indent=4, ensure_ascii=False)
+        json.dump({"model_name": "Ridge Regression", **ridge_params}, f, indent=4, ensure_ascii=False)
 
     with paths["model_metadata"].open("w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=4, ensure_ascii=False)

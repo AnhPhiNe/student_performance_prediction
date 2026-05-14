@@ -80,7 +80,7 @@
             "subsample": 0.8
         }
     },
-    "dataset_path": "C:\\Users\\A Fee\\Desktop\\Workspace\\AI_projects\\Student_Performance_Predictor\\data\\Student_Performance.csv",
+    "dataset_path": "data/Student_Performance.csv",
     "limitation_note": "This is a portfolio-oriented tabular regression model. Feature selection uses train-only statistical screening, and final holdout metrics should be treated as project evidence rather than a locked production benchmark.",
     "model_comparison": [
         {

@@ -383,7 +383,7 @@ with step_col2:
     st.info(
         "Batch prediction expects input features only. Do not upload the original training dataset directly. "
         "Remove the target column `Exam_Score` before prediction, or use the downloadable template for the safest format. "
-        "`Hours_Studied` is treated as weekly study hours and has no upper range limit."
+        "`Hours_Studied` is treated as weekly study hours and must be between 0 and 80."
     )
     uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 

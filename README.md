@@ -234,6 +234,14 @@ The Streamlit UI can use this backend in API-backed mode, but the API is intenti
 
 The current saved model is Ridge Regression. The active hyperparameters and evaluation metadata are stored under `models/`.
 
+Current holdout metrics:
+
+```text
+R2   = 0.824
+MAE  = 0.43
+RMSE = 1.53
+```
+
 This project reports model metrics as portfolio evidence, not as a locked production benchmark.
 
 ## Limitations
@@ -245,7 +253,7 @@ This project reports model metrics as portfolio evidence, not as a locked produc
 
 ## Future Improvements
 
-- Add final screenshots to the repository README.
+- Add optional demo screenshots or a short GIF if the repository is used in a portfolio page.
 - Expand unit tests for validators and schema alignment.
 - Add more detailed model and data source notes.
 - Move the API to a paid instance if low-latency cold starts become important.
