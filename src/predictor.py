@@ -39,11 +39,11 @@ def coerce_input_types(df: pd.DataFrame) -> pd.DataFrame:
 
     for col in numeric_columns:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+            df.loc[:, col] = pd.to_numeric(df[col], errors="coerce")
 
     for col in df.columns:
         if col not in numeric_columns:
-            df[col] = df[col].astype("string")
+            df.loc[:, col] = df[col].astype("string")
 
     return df
 
