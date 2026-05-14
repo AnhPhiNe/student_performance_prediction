@@ -488,8 +488,8 @@ render_pipeline_flow(
     [
         "Raw Input",
         "Validation",
-        "Feature Engineering",
         "Preprocessing",
+        "Feature Selection",
         "Ridge Regression",
         "Predicted Score",
     ]

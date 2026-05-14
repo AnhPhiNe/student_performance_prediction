@@ -50,7 +50,6 @@ Student_Performance_Predictor/
 |   +-- __init__.py
 |   +-- artifact_loader.py
 |   +-- config.py
-|   +-- feature_engineering.py
 |   +-- prediction_service.py
 |   +-- predictor.py
 |   +-- validators.py
@@ -104,9 +103,8 @@ The inference flow is:
 ```text
 Raw input
     -> Validation
-    -> Feature engineering
-    -> Selected feature filtering
     -> Preprocessing
+    -> Train-only feature selection
     -> Ridge Regression
     -> Clipped score
     -> Score band and recommendations
@@ -129,7 +127,7 @@ The production-oriented training workflow lives in:
 scripts/train_model.py
 ```
 
-The script performs data loading, cleaning, train/test split, feature engineering, train-only feature screening, model comparison, final Ridge pipeline fitting, artifact export, metadata export, and an exported-pipeline smoke check.
+The script performs data loading, cleaning, train/test split, train-only feature screening, model comparison, final Ridge pipeline fitting, artifact export, metadata export, and an exported-pipeline smoke check.
 
 Existing artifacts are not overwritten silently. Move or remove the current files in `models/` before intentionally exporting a fresh model run.
 

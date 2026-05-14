@@ -18,7 +18,6 @@ import logging
 import platform
 import sys
 from datetime import datetime, timezone
-from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -36,15 +35,12 @@ from sklearn.linear_model import Lasso, LinearRegression, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.feature_engineering import add_new_features, feature_engineering_for_pipeline
-
 
 RANDOM_STATE = 42
 TEST_SIZE = 0.20
@@ -62,12 +58,6 @@ ARTIFACT_FILENAMES = {
     "best_hyperparameters": "best_hyperparameters.json",
     "model_metadata": "model_metadata.json",
 }
-
-NEW_ENGINEERED_FEATURES = [
-    "Study_Efficiency",
-    "Total_Study_Time",
-    "Engagement_Index",
-]
 
 BINARY_OR_NOMINAL_FEATURES = [
     "Extracurricular_Activities",
@@ -177,17 +167,15 @@ def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame,
     return X_train_raw, X_test_raw, y_train, y_test
 
 
-def get_feature_groups(engineered_df: pd.DataFrame) -> dict[str, list[Any]]:
-    original_numeric = engineered_df.select_dtypes(include=["number"]).columns.tolist()
-    numeric_raw = [col for col in original_numeric if col not in NEW_ENGINEERED_FEATURES]
-    numeric_features = numeric_raw + [col for col in NEW_ENGINEERED_FEATURES if col in engineered_df.columns]
+def get_feature_groups(feature_df: pd.DataFrame) -> dict[str, list[Any]]:
+    numeric_features = feature_df.select_dtypes(include=["number"]).columns.tolist()
 
-    binary_or_nominal = [col for col in BINARY_OR_NOMINAL_FEATURES if col in engineered_df.columns]
+    binary_or_nominal = [col for col in BINARY_OR_NOMINAL_FEATURES if col in feature_df.columns]
 
     ordinal_features = []
     ordinal_categories = []
     for index, col in enumerate(ORDINAL_FEATURES):
-        if col in engineered_df.columns:
+        if col in feature_df.columns:
             ordinal_features.append(col)
             ordinal_categories.append(ORDINAL_CATEGORIES[index])
 
@@ -270,13 +258,13 @@ def clean_encoded_feature_name(feature_name: str) -> str:
 
 
 def select_raw_survivor_features(
-    X_train_engineered: pd.DataFrame,
+    X_train_raw: pd.DataFrame,
     y_train: pd.Series,
     feature_groups: dict[str, list[Any]],
 ) -> list[str]:
     logging.info("Running train-only feature screening")
     screening_preprocessor = build_preprocessor(feature_groups)
-    X_train_encoded = screening_preprocessor.fit_transform(X_train_engineered)
+    X_train_encoded = screening_preprocessor.fit_transform(X_train_raw)
 
     _, p_values = f_regression(X_train_encoded, y_train)
     mi_scores = mutual_info_regression(X_train_encoded, y_train, random_state=RANDOM_STATE)
@@ -371,17 +359,14 @@ def prepare_modeling_matrices(
     X_test_raw: pd.DataFrame,
     y_train: pd.Series,
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[str], ColumnTransformer]:
-    X_train_engineered = add_new_features(X_train_raw)
-    X_test_engineered = add_new_features(X_test_raw)
-
-    feature_groups = get_feature_groups(X_train_engineered)
-    raw_survivors = select_raw_survivor_features(X_train_engineered, y_train, feature_groups)
+    feature_groups = get_feature_groups(X_train_raw)
+    raw_survivors = select_raw_survivor_features(X_train_raw, y_train, feature_groups)
     selected_feature_groups = filter_feature_groups_for_survivors(feature_groups, raw_survivors)
 
     selected_preprocessor = build_preprocessor(selected_feature_groups)
 
-    X_train_selected = X_train_engineered[raw_survivors].copy()
-    X_test_selected = X_test_engineered[raw_survivors].copy()
+    X_train_selected = X_train_raw[raw_survivors].copy()
+    X_test_selected = X_test_raw[raw_survivors].copy()
 
     X_train_encoded = selected_preprocessor.fit_transform(X_train_selected)
     X_test_encoded = selected_preprocessor.transform(X_test_selected)
@@ -600,19 +585,8 @@ def residual_summary(y_true: pd.Series | np.ndarray, y_pred: np.ndarray) -> dict
 
 def build_final_pipeline(
     selected_preprocessor: ColumnTransformer,
-    raw_survivors: list[str],
-    raw_feature_names: list[str],
     ridge_params: dict[str, Any],
 ) -> Pipeline:
-    feature_engineer = FunctionTransformer(
-        partial(
-            feature_engineering_for_pipeline,
-            raw_survivors=raw_survivors,
-            raw_feature_names=raw_feature_names,
-        ),
-        validate=False,
-    )
-
     final_ridge = Ridge(
         alpha=ridge_params.get("alpha", 1.0),
         random_state=RANDOM_STATE,
@@ -620,7 +594,6 @@ def build_final_pipeline(
 
     return Pipeline(
         steps=[
-            ("feature_eng", feature_engineer),
             ("preprocess", selected_preprocessor),
             ("model", final_ridge),
         ]
@@ -784,8 +757,6 @@ def main() -> None:
     ridge_params = best_hyperparameters["Ridge Regression"]
     final_pipeline = build_final_pipeline(
         selected_preprocessor=selected_preprocessor,
-        raw_survivors=raw_survivors,
-        raw_feature_names=raw_feature_names,
         ridge_params=ridge_params,
     )
 
