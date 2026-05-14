@@ -34,7 +34,6 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 ## Folder Structure
 
 ```text
-Student_Performance_Predictor/
 +-- app.py
 +-- api/
 |   +-- __init__.py
