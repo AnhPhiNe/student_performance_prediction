@@ -112,6 +112,7 @@ XGBoost is used only as an optional training comparison in `scripts/train_model.
 |   +-- test_api.py
 |   +-- test_inference_client.py
 |   +-- test_model_pipeline.py
+|   +-- test_schema_contract.py
 +-- requirements.txt
 +-- README.md
 +-- LICENSE
@@ -182,7 +183,7 @@ python scripts/train_model.py
 
 By default, export fails if the target artifact files already exist. This is intentional overwrite protection, not a training failure.
 
-The notebook in `notebooks/model_exploration.ipynb` is kept for EDA and modeling reference.
+The notebook in `notebooks/model_exploration.ipynb` is kept as an English EDA and modeling reference. It does not store executed cell outputs, so the repository stays lightweight and easier to review.
 
 ## Run Locally
 
@@ -297,6 +298,6 @@ Model selection note:
 ## Future Improvements
 
 - Add optional demo screenshots or a short GIF if the repository is used in a portfolio page.
-- Expand unit tests for validators and schema alignment.
-- Add more detailed model and data source notes.
+- Add CI to run `pytest` automatically on pull requests.
+- Add more validator edge-case tests if the input schema changes.
 - Move the API to a paid instance if low-latency cold starts become important.
