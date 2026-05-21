@@ -2,7 +2,7 @@
 import os
 
 # =========================================================
-# 1) ĐƯỜNG DẪN THƯ MỤC / FILE
+# 1) Project paths
 # =========================================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,7 +26,7 @@ CSS_PATH = os.path.join(CSS_DIR, "styles.css")
 
 
 # =========================================================
-# 2) TÊN CỘT HIỂN THỊ THÂN THIỆN CHO NGƯỜI DÙNG
+# 2) User-facing feature labels
 # =========================================================
 FRIENDLY_LABELS = {
     "Hours_Studied": "Hours Studied per Week",
@@ -53,7 +53,7 @@ FRIENDLY_LABELS = {
 
 
 # =========================================================
-# 3) CÁC GIÁ TRỊ CHO CỘT PHÂN LOẠI
+# 3) Allowed categorical values
 # =========================================================
 CATEGORICAL_OPTIONS = {
     "Parental_Involvement": ["Low", "Medium", "High"],
@@ -73,7 +73,7 @@ CATEGORICAL_OPTIONS = {
 
 
 # =========================================================
-# 4) GIÁ TRỊ MẶC ĐỊNH KHI TẠO FORM
+# 4) Default values for forms and templates
 # =========================================================
 DEFAULT_VALUES = {
     "Hours_Studied": 5,
@@ -99,7 +99,7 @@ DEFAULT_VALUES = {
 
 
 # =========================================================
-# 5) CÁC HỒ SƠ MẪU ĐỂ DEMO NHANH
+# 5) Demo profiles for quick testing
 # =========================================================
 SAMPLE_PROFILES = {
     "Balanced Student": {
@@ -169,10 +169,10 @@ SAMPLE_PROFILES = {
 
 
 # =========================================================
-# 6) KHOẢNG GIÁ TRỊ HỢP LỆ CHO BIẾN SỐ
+# 6) Valid ranges for numeric features
 # =========================================================
 NUMERIC_RANGES = {
-    "Hours_Studied":(0,80),
+    "Hours_Studied": (0, 80),
     "Attendance": (0, 100),
     "Previous_Scores": (0, 100),
     "Tutoring_Sessions": (0, 20),
@@ -182,7 +182,22 @@ NUMERIC_RANGES = {
 
 
 # =========================================================
-# 7) CÁC NHÓM INPUT ĐỂ CHIA FORM CHO ĐẸP
+# 7) Neutral defaults for selected missing categorical batch values
+# =========================================================
+CATEGORICAL_DEFAULTS = {
+    "Teacher_Quality": "Medium",
+    "Parental_Education_Level": "High School",
+    "Distance_from_Home": "Moderate",
+    "Access_to_Resources": "Medium",
+    "Motivation_Level": "Medium",
+    "Parental_Involvement": "Medium",
+    "Family_Income": "Medium",
+    "Peer_Influence": "Neutral",
+}
+
+
+# =========================================================
+# 8) Input groups used by the Streamlit form
 # =========================================================
 FORM_GROUPS = {
     "Academic Habits": [

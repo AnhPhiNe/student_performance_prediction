@@ -1,15 +1,13 @@
 # src/validators.py
 
 import pandas as pd
+
 from src.config import CATEGORICAL_OPTIONS, NUMERIC_RANGES
 
 
 def validate_required_columns(df: pd.DataFrame, required_columns: list[str]) -> dict:
     """
-    Kiểm tra cột bắt buộc.
-    Trả về dict gồm:
-    - missing_columns
-    - extra_columns
+    Check required and unexpected columns.
     """
     missing_columns = [col for col in required_columns if col not in df.columns]
     extra_columns = [col for col in df.columns if col not in required_columns]
@@ -22,7 +20,7 @@ def validate_required_columns(df: pd.DataFrame, required_columns: list[str]) -> 
 
 def validate_numeric_ranges(df: pd.DataFrame) -> list[str]:
     """
-    Kiểm tra các cột số có nằm trong khoảng hợp lệ không.
+    Check that numeric columns contain valid numbers inside configured ranges.
     """
     errors = []
 
@@ -43,7 +41,7 @@ def validate_numeric_ranges(df: pd.DataFrame) -> list[str]:
 
 def validate_categorical_values(df: pd.DataFrame) -> list[str]:
     """
-    Kiểm tra các cột phân loại có chứa giá trị hợp lệ không.
+    Check that categorical columns contain only configured allowed values.
     """
     errors = []
 
@@ -64,7 +62,7 @@ def validate_categorical_values(df: pd.DataFrame) -> list[str]:
 
 def validate_no_missing_values(df: pd.DataFrame, required_columns: list[str]) -> list[str]:
     """
-    Kiểm tra xem các cột bắt buộc có bị thiếu dữ liệu không.
+    Check that required columns do not contain missing values.
     """
     errors = []
 
@@ -77,11 +75,7 @@ def validate_no_missing_values(df: pd.DataFrame, required_columns: list[str]) ->
 
 def validate_input_dataframe(df: pd.DataFrame, required_columns: list[str]) -> dict:
     """
-    Hàm tổng để kiểm tra toàn bộ input DataFrame.
-    Trả về dict:
-    - is_valid
-    - errors
-    - warnings
+    Validate the full input DataFrame contract.
     """
     errors = []
     warnings = []
@@ -108,7 +102,7 @@ def validate_input_dataframe(df: pd.DataFrame, required_columns: list[str]) -> d
 
 def validate_single_input_dict(input_dict: dict, required_columns: list[str]) -> dict:
     """
-    Validate cho single prediction.
+    Validate a single prediction payload.
     """
     df = pd.DataFrame([input_dict], columns=required_columns)
     return validate_input_dataframe(df, required_columns)

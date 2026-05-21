@@ -1,21 +1,20 @@
 # src/helpers.py
 
 import pandas as pd
+
 from src.config import DEFAULT_VALUES, FRIENDLY_LABELS
 
 
 def get_friendly_label(column_name: str) -> str:
     """
-    Đổi tên cột kỹ thuật sang tên dễ đọc hơn cho giao diện.
-    Nếu không có trong FRIENDLY_LABELS thì thay dấu _ bằng khoảng trắng.
+    Convert a technical column name into a user-facing label.
     """
     return FRIENDLY_LABELS.get(column_name, column_name.replace("_", " "))
 
 
 def build_default_input(raw_feature_names: list[str]) -> dict:
     """
-    Tạo một dictionary mặc định cho tất cả các input field.
-    Dùng khi khởi tạo form hoặc tạo template CSV.
+    Build a default input dictionary for forms and CSV templates.
     """
     data = {}
 
@@ -27,8 +26,7 @@ def build_default_input(raw_feature_names: list[str]) -> dict:
 
 def dict_to_single_row_df(data: dict, raw_feature_names: list[str]) -> pd.DataFrame:
     """
-    Chuyển dictionary input thành DataFrame 1 dòng
-    và đảm bảo thứ tự cột đúng như model mong muốn.
+    Convert an input dictionary into a schema-ordered one-row DataFrame.
     """
     row = {
         feature: data.get(feature, DEFAULT_VALUES.get(feature, None))
@@ -39,7 +37,7 @@ def dict_to_single_row_df(data: dict, raw_feature_names: list[str]) -> pd.DataFr
 
 def format_score(score: float) -> str:
     """
-    Format điểm cho đẹp khi hiển thị ra UI.
+    Format a numeric score for UI display.
     """
     try:
         return f"{float(score):.1f}"
@@ -49,8 +47,7 @@ def format_score(score: float) -> str:
 
 def safe_get_first_value(df: pd.DataFrame, column_name: str, default=None):
     """
-    Lấy giá trị đầu tiên của một cột trong DataFrame cho an toàn.
-    Nếu cột không tồn tại hoặc lỗi thì trả về default.
+    Return the first value from a DataFrame column, or a fallback default.
     """
     try:
         return df[column_name].iloc[0]

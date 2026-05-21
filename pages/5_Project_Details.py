@@ -452,6 +452,11 @@ render_doc_table(
     ["Item", "Value"],
     [
         ["Rows", dataset_rows()],
+        [
+            "Source",
+            '<a href="https://www.kaggle.com/datasets/lainguyn123/student-performance-factors" target="_blank" rel="noopener noreferrer">Kaggle: Student Performance Factors</a>',
+        ],
+        ["License", "CC0: Public Domain"],
         ["Target", "<code>Exam_Score</code>"],
         ["Inputs", feature_count()],
         ["Input Type", "Structured Tabular Data"],
@@ -545,6 +550,7 @@ render_section_title("Limitations & Responsible Use")
 render_checklist(
     [
         "Predictions are correlational, not causal explanations",
+        "Dataset is public educational data, not a verified production school system extract",
         "Dataset limitations may affect generalization",
         "Not for real educational decision-making",
     ]

@@ -30,6 +30,28 @@ Exam_Score
 
 The app is intended for machine learning engineering demonstration and portfolio review, not for real educational decision-making.
 
+## Dataset Source
+
+The dataset used in this repository is **Student Performance Factors** by Lai Nguyen on Kaggle:
+
+```text
+https://www.kaggle.com/datasets/lainguyn123/student-performance-factors
+```
+
+The dataset contains 6,607 rows and 20 columns covering academic habits, lifestyle, family context, school context, and the final `Exam_Score` target.
+
+License: **CC0: Public Domain**.
+
+Important note: this project treats the dataset as a public educational dataset for portfolio demonstration. The model output should not be used for real student assessment, intervention decisions, or high-stakes academic guidance.
+
+## Demo
+
+- Live Streamlit app: [student-performance-predictor-ap.streamlit.app](https://student-performance-predictor-ap.streamlit.app)
+- Live FastAPI backend: [student-performance-prediction-8xv5.onrender.com](https://student-performance-prediction-8xv5.onrender.com)
+- API docs: [student-performance-prediction-8xv5.onrender.com/docs](https://student-performance-prediction-8xv5.onrender.com/docs)
+
+If the Render API is on a free instance, the first request may be slow because of cold start behavior.
+
 ## Tech Stack
 
 - **Language:** Python
@@ -146,6 +168,20 @@ The script performs data loading, cleaning, train/test split, train-only feature
 
 Existing artifacts are not overwritten silently. Move or remove the current files in `models/` before intentionally exporting a fresh model run.
 
+Run training without exporting artifacts:
+
+```bash
+python scripts/train_model.py --no-export
+```
+
+Run training and export artifacts:
+
+```bash
+python scripts/train_model.py
+```
+
+By default, export fails if the target artifact files already exist. This is intentional overwrite protection, not a training failure.
+
 The notebook in `notebooks/model_exploration.ipynb` is kept for EDA and modeling reference.
 
 ## Run Locally
@@ -244,10 +280,17 @@ RMSE = 1.53
 
 This project reports model metrics as portfolio evidence, not as a locked production benchmark.
 
+Model selection note:
+
+- Feature screening is fitted only on the training split before final holdout evaluation.
+- Cross-validation scores in the comparison table are useful for model ranking, but they are not a nested-CV benchmark.
+- Final public-facing metrics should be interpreted from the saved holdout evaluation in `models/model_metadata.json`.
+
 ## Limitations
 
 - Predictions are correlational and should not be treated as causal explanations.
 - The dataset may not generalize to every school system or student population.
+- The dataset is public and educational; it is not a verified production school information system dataset.
 - The app is designed for demonstration, not high-stakes academic decisions.
 - Local explanations such as SHAP are not part of the current deployed app.
 

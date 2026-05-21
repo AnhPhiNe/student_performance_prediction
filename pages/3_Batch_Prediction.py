@@ -11,7 +11,7 @@ st.set_page_config(
 
 from sklearn import set_config
 
-from src.config import CATEGORICAL_OPTIONS, NUMERIC_RANGES
+from src.config import CATEGORICAL_DEFAULTS, CATEGORICAL_OPTIONS, NUMERIC_RANGES
 from src.loader import load_css, load_model_assets
 from src.helpers import build_default_input
 from src.inference_client import (
@@ -42,18 +42,6 @@ except Exception as e:
 # =========================================================
 # 2) HELPERS
 # =========================================================
-CATEGORICAL_DEFAULTS = {
-    "Teacher_Quality": "Medium",
-    "Parental_Education_Level": "High School",
-    "Distance_from_Home": "Moderate",
-    "Access_to_Resources": "Medium",
-    "Motivation_Level": "Medium",
-    "Parental_Involvement": "Medium",
-    "Family_Income": "Medium",
-    "Peer_Influence": "Neutral",
-}
-
-
 def create_template_dataframe(required_columns: list[str]) -> pd.DataFrame:
     default_row = build_default_input(required_columns)
     return pd.DataFrame([default_row])

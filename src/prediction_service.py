@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from src.artifact_loader import ModelAssets
-from src.config import CATEGORICAL_OPTIONS, NUMERIC_RANGES
+from src.config import CATEGORICAL_DEFAULTS, CATEGORICAL_OPTIONS, NUMERIC_RANGES
 from src.predictor import (
     build_input_dataframe,
     coerce_input_types,
@@ -15,18 +15,6 @@ from src.predictor import (
     score_band,
 )
 from src.validators import validate_input_dataframe
-
-
-CATEGORICAL_DEFAULTS = {
-    "Teacher_Quality": "Medium",
-    "Parental_Education_Level": "High School",
-    "Distance_from_Home": "Moderate",
-    "Access_to_Resources": "Medium",
-    "Motivation_Level": "Medium",
-    "Parental_Involvement": "Medium",
-    "Family_Income": "Medium",
-    "Peer_Influence": "Neutral",
-}
 
 
 @dataclass(frozen=True)

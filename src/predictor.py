@@ -2,15 +2,16 @@
 
 import numpy as np
 import pandas as pd
+
 from src.config import DEFAULT_VALUES
 
 
 def build_input_dataframe(user_input: dict, raw_feature_names: list[str]) -> pd.DataFrame:
     """
-    Tạo DataFrame đầu vào từ dữ liệu người dùng nhập.
-    Đảm bảo:
-    - đúng tên cột
-    - đúng thứ tự cột
+    Build a one-row input DataFrame from user-provided values.
+
+    This keeps the model input contract stable by preserving the expected
+    feature names and column order.
     """
     raw_feature_names = list(raw_feature_names)
 
@@ -24,7 +25,7 @@ def build_input_dataframe(user_input: dict, raw_feature_names: list[str]) -> pd.
 
 def coerce_input_types(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Ép kiểu dữ liệu nhưng vẫn giữ DataFrame và tên cột.
+    Coerce input values while preserving DataFrame columns.
     """
     df = df.copy()
 
@@ -50,7 +51,7 @@ def coerce_input_types(df: pd.DataFrame) -> pd.DataFrame:
 
 def predict_single(model_pipeline, input_df: pd.DataFrame, raw_feature_names: list[str]) -> float:
     """
-    Dự đoán điểm cho 1 học sinh.
+    Predict one student's exam score.
     """
     raw_feature_names = list(raw_feature_names)
 
@@ -67,7 +68,7 @@ def predict_single(model_pipeline, input_df: pd.DataFrame, raw_feature_names: li
 
 def predict_batch(model_pipeline, batch_df: pd.DataFrame, raw_feature_names: list[str]) -> pd.DataFrame:
     """
-    Dự đoán điểm cho nhiều học sinh cùng lúc.
+    Predict exam scores for multiple students.
     """
     raw_feature_names = list(raw_feature_names)
 
