@@ -40,6 +40,8 @@ https://www.kaggle.com/datasets/lainguyn123/student-performance-factors
 
 The dataset contains 6,607 rows and 20 columns covering academic habits, lifestyle, family context, school context, and the final `Exam_Score` target.
 
+Because the source dataset is already structured and relatively clean, this project focuses on end-to-end ML engineering, inference consistency, validation, deployment, and portfolio-ready productization rather than heavy raw data cleaning.
+
 License: **CC0: Public Domain**.
 
 Important note: this project treats the dataset as a public educational dataset for portfolio demonstration. The model output should not be used for real student assessment, intervention decisions, or high-stakes academic guidance.
