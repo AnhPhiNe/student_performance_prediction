@@ -1,0 +1,141 @@
+{
+    "training_date": "2026-05-14T02:00:55.667227+00:00",
+    "python_version": "3.12.10",
+    "sklearn_version": "1.5.2",
+    "pandas_version": "2.2.3",
+    "numpy_version": "2.0.2",
+    "joblib_version": "1.4.2",
+    "metrics": {
+        "r2": 0.8238680665994899,
+        "mae": 0.4299642913298906,
+        "rmse": 1.526174060955797
+    },
+    "residual_summary": {
+        "mean": -0.09222531230670508,
+        "std": 1.5233849664822874,
+        "min": -1.5349879597575438,
+        "median": -0.191851529390906,
+        "max": 29.130857644075206
+    },
+    "raw_feature_names": [
+        "Hours_Studied",
+        "Attendance",
+        "Parental_Involvement",
+        "Access_to_Resources",
+        "Extracurricular_Activities",
+        "Sleep_Hours",
+        "Previous_Scores",
+        "Motivation_Level",
+        "Internet_Access",
+        "Tutoring_Sessions",
+        "Family_Income",
+        "Teacher_Quality",
+        "School_Type",
+        "Peer_Influence",
+        "Physical_Activity",
+        "Learning_Disabilities",
+        "Parental_Education_Level",
+        "Distance_from_Home",
+        "Gender"
+    ],
+    "selected_raw_survivor_features": [
+        "Attendance",
+        "Hours_Studied",
+        "Parental_Involvement",
+        "Tutoring_Sessions",
+        "Previous_Scores",
+        "Peer_Influence",
+        "Teacher_Quality",
+        "Motivation_Level",
+        "Distance_from_Home",
+        "Physical_Activity",
+        "Access_to_Resources",
+        "Internet_Access",
+        "Learning_Disabilities",
+        "Family_Income",
+        "Extracurricular_Activities",
+        "Parental_Education_Level"
+    ],
+    "final_model_name": "Ridge Regression",
+    "best_hyperparameters": {
+        "Ridge Regression": {
+            "alpha": 5.0
+        },
+        "Lasso Regression": {
+            "alpha": 0.0001
+        },
+        "Random Forest": {
+            "max_depth": null,
+            "max_features": "sqrt",
+            "min_samples_leaf": 2,
+            "n_estimators": 400
+        },
+        "XGBoost": {
+            "colsample_bytree": 0.8,
+            "learning_rate": 0.03,
+            "max_depth": 3,
+            "min_child_weight": 10,
+            "n_estimators": 300,
+            "reg_lambda": 10,
+            "subsample": 0.8
+        }
+    },
+    "dataset_path": "data/Student_Performance.csv",
+    "limitation_note": "This is a portfolio-oriented tabular regression model. Feature selection uses train-only statistical screening, and final holdout metrics should be treated as project evidence rather than a locked production benchmark.",
+    "model_comparison": [
+        {
+            "model": "Ridge Regression",
+            "cv_r2": 0.7160873294616792,
+            "r2_train": 0.7092434930909328,
+            "r2_test": 0.8238680665994899,
+            "train_test_gap": -0.11462457350855704,
+            "mae": 0.4299642913298906,
+            "rmse": 1.526174060955797
+        },
+        {
+            "model": "Linear Regression",
+            "cv_r2": 0.7160842113702854,
+            "r2_train": 0.7092457276648773,
+            "r2_test": 0.8238809233771308,
+            "train_test_gap": -0.11463519571225356,
+            "mae": 0.42958022544583263,
+            "rmse": 1.526118358283802
+        },
+        {
+            "model": "Lasso Regression",
+            "cv_r2": 0.7160840582410046,
+            "r2_train": 0.7092456949656765,
+            "r2_test": 0.8238788716054223,
+            "train_test_gap": -0.11463317663974582,
+            "mae": 0.42962539885117434,
+            "rmse": 1.5261272478300447
+        },
+        {
+            "model": "XGBoost",
+            "cv_r2": 0.6828213214874268,
+            "r2_train": 0.7145752906799316,
+            "r2_test": 0.7861228585243225,
+            "train_test_gap": -0.07154756784439087,
+            "mae": 0.7279458240734106,
+            "rmse": 1.681772438577752
+        },
+        {
+            "model": "Random Forest",
+            "cv_r2": 0.6440567210303236,
+            "r2_train": 0.8511294128931783,
+            "r2_test": 0.7444088010959626,
+            "train_test_gap": 0.1067206117972157,
+            "mae": 0.9531883403077536,
+            "rmse": 1.838475997886689
+        },
+        {
+            "model": "Dummy Baseline",
+            "cv_r2": -0.0027757153299281523,
+            "r2_train": 0.0,
+            "r2_test": -0.0019724916291559147,
+            "train_test_gap": 0.0019724916291559147,
+            "mae": 2.7629234374087392,
+            "rmse": 3.6400966587307098
+        }
+    ]
+}
