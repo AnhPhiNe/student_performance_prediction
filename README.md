@@ -119,5 +119,16 @@ python -m pytest tests/
 └── app.py                # Streamlit entry point
 ```
 
+## ⚠️ Limitations
+- Predictions are correlational and should not be treated as causal explanations.
+- The dataset may not generalize to every school system or student population.
+- The dataset is public and educational; it is not a verified production school information system dataset.
+- The app is designed for demonstration, not high-stakes academic decisions.
+
+## 🔮 Future Improvements
+- Add CI/CD pipelines (GitHub Actions) to run `pytest` automatically on pull requests.
+- Integrate SHAP or LIME for granular local explainability.
+- Move the API to a paid instance or implement a keep-alive ping if low-latency cold starts become critical.
+
 ## 📝 License
 This project is open-source under the MIT License. Data used is CC0 (Public Domain).
