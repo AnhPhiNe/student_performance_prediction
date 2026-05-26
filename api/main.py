@@ -1,7 +1,8 @@
+from contextlib import asynccontextmanager
 from io import StringIO
 
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 
 from api.schemas import (
     BatchPredictionRequest,
@@ -19,10 +20,24 @@ from src.prediction_service import (
 )
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Load the ML model and assets into the application state
+    before the server starts receiving requests.
+    """
+    assets = load_model_assets()
+    app.state.assets = assets
+    yield
+    # Clean up on shutdown
+    app.state.assets = None
+
+
 app = FastAPI(
     title="Student Performance Predictor API",
     description="FastAPI inference backend for the Student Performance Predictor model.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -41,14 +56,14 @@ def health_check() -> dict[str, str]:
 
 
 @app.get("/metadata", response_model=MetadataResponse)
-def get_metadata() -> dict:
-    assets = load_model_assets()
+def get_metadata(request: Request) -> dict:
+    assets = request.app.state.assets
     return build_model_metadata(assets)
 
 
 @app.post("/predict", response_model=PredictionResponse)
-def predict(profile: StudentProfileRequest) -> PredictionResponse:
-    assets = load_model_assets()
+def predict(profile: StudentProfileRequest, request: Request) -> PredictionResponse:
+    assets = request.app.state.assets
 
     try:
         result = predict_student_profile(profile.model_dump(), assets)
@@ -67,8 +82,8 @@ def predict(profile: StudentProfileRequest) -> PredictionResponse:
 
 
 @app.post("/batch-predict", response_model=BatchPredictionResponse)
-def batch_predict(payload: BatchPredictionRequest) -> BatchPredictionResponse:
-    assets = load_model_assets()
+def batch_predict(payload: BatchPredictionRequest, request: Request) -> BatchPredictionResponse:
+    assets = request.app.state.assets
     records = [record.model_dump() for record in payload.records]
 
     try:
@@ -88,7 +103,7 @@ def batch_predict(payload: BatchPredictionRequest) -> BatchPredictionResponse:
 
 
 @app.post("/batch-predict-csv", response_model=BatchPredictionResponse)
-async def batch_predict_csv(file: UploadFile = File(...)) -> BatchPredictionResponse:
+async def batch_predict_csv(request: Request, file: UploadFile = File(...)) -> BatchPredictionResponse:
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(
             status_code=400,
@@ -111,7 +126,7 @@ async def batch_predict_csv(file: UploadFile = File(...)) -> BatchPredictionResp
                 detail={"errors": ["Uploaded CSV must contain at least one data row."]},
             )
 
-        assets = load_model_assets()
+        assets = request.app.state.assets
         matching_columns = [
             column for column in uploaded_df.columns if column in assets.raw_feature_names
         ]

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: student_predictor_api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: student_predictor_ui
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Point to the Docker network internal API URL
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
